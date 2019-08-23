@@ -1,0 +1,159 @@
+python -m tools.bfp_quant --model_name vgg16 \
+--dataset_dir /mnt/ccnas2/bdp/hf17/Datasets/Imagenet12/ \
+--mantisa_bit 12 \
+--exp_bit 8 \
+--batch_size 64 \
+--num_workers 8 \
+--num_classes 1000 \
+--gpus 3,4 \
+--std 0.229,0.224,0.225 \
+--mean 0.485,0.456,0.406 \
+--resize 256 \
+--crop 224 \
+--exp_act kl \
+--bfp_act_chnl 256 \
+--bfp_weight_chnl 128 \
+--bfp_quant 1 \
+--num_examples 40 \
+--hooks Conv2d,Linear \
+--act_bins_factor 6 2>&1 | tee log/bit_width_explore/vgg16/vgg16_m12_e8.txt
+
+python -m tools.bfp_quant --model_name vgg16 \
+--dataset_dir /mnt/ccnas2/bdp/hf17/Datasets/Imagenet12/ \
+--mantisa_bit 11 \
+--exp_bit 8 \
+--batch_size 64 \
+--num_workers 8 \
+--num_classes 1000 \
+--gpus 3,4 \
+--std 0.229,0.224,0.225 \
+--mean 0.485,0.456,0.406 \
+--resize 256 \
+--crop 224 \
+--exp_act kl \
+--bfp_act_chnl 256 \
+--bfp_weight_chnl 128 \
+--bfp_quant 1 \
+--num_examples 40 \
+--hooks Conv2d,Linear \
+--act_bins_factor 6 2>&1  | tee log/bit_width_explore/vgg16/vgg16_m11_e8.txt
+
+python -m tools.bfp_quant --model_name vgg16 \
+--dataset_dir /mnt/ccnas2/bdp/hf17/Datasets/Imagenet12/ \
+--mantisa_bit 10 \
+--exp_bit 8 \
+--batch_size 64 \
+--num_workers 8 \
+--num_classes 1000 \
+--gpus 3,4 \
+--std 0.229,0.224,0.225 \
+--mean 0.485,0.456,0.406 \
+--resize 256 \
+--crop 224 \
+--exp_act kl \
+--bfp_act_chnl 256 \
+--bfp_weight_chnl 128 \
+--bfp_quant 1 \
+--num_examples 40 \
+--hooks Conv2d,Linear \
+--act_bins_factor 6 2>&1  | tee log/bit_width_explore/vgg16/vgg16_m10_e8.txt
+
+python -m tools.bfp_quant --model_name vgg16 \
+--dataset_dir /mnt/ccnas2/bdp/hf17/Datasets/Imagenet12/ \
+--mantisa_bit 9 \
+--exp_bit 8 \
+--batch_size 64 \
+--num_workers 8 \
+--num_classes 1000 \
+--gpus 3,4 \
+--std 0.229,0.224,0.225 \
+--mean 0.485,0.456,0.406 \
+--resize 256 \
+--crop 224 \
+--exp_act kl \
+--bfp_act_chnl 256 \
+--bfp_weight_chnl 128 \
+--bfp_quant 1 \
+--num_examples 40 \
+--hooks Conv2d,Linear \
+--act_bins_factor 6 2>&1 | tee log/bit_width_explore/vgg16/vgg16_m9_e8.txt
+
+python -m tools.bfp_quant --model_name vgg16 \
+--dataset_dir /mnt/ccnas2/bdp/hf17/Datasets/Imagenet12/ \
+--mantisa_bit 8 \
+--exp_bit 8 \
+--batch_size 64 \
+--num_workers 8 \
+--num_classes 1000 \
+--gpus 3,4 \
+--std 0.229,0.224,0.225 \
+--mean 0.485,0.456,0.406 \
+--resize 256 \
+--crop 224 \
+--exp_act kl \
+--bfp_act_chnl 256 \
+--bfp_weight_chnl 128 \
+--bfp_quant 1 \
+--num_examples 40 \
+--hooks Conv2d,Linear \
+--act_bins_factor 6 2>&1 | tee log/bit_width_explore/vgg16/vgg16_m8_e8.txt
+
+python -m tools.bfp_quant --model_name vgg16 \
+--dataset_dir /mnt/ccnas2/bdp/hf17/Datasets/Imagenet12/ \
+--mantisa_bit 7 \
+--exp_bit 8 \
+--batch_size 64 \
+--num_workers 8 \
+--num_classes 1000 \
+--gpus 3,4 \
+--std 0.229,0.224,0.225 \
+--mean 0.485,0.456,0.406 \
+--resize 256 \
+--crop 224 \
+--exp_act kl \
+--bfp_act_chnl 256 \
+--bfp_weight_chnl 128 \
+--bfp_quant 1 \
+--num_examples 40 \
+--hooks Conv2d,Linear \
+--act_bins_factor 6 2>&1  | tee log/bit_width_explore/vgg16/vgg16_m7_e8.txt
+
+python -m tools.bfp_quant --model_name vgg16 \
+--dataset_dir /mnt/ccnas2/bdp/hf17/Datasets/Imagenet12/ \
+--mantisa_bit 6 \
+--exp_bit 8 \
+--batch_size 64 \
+--num_workers 8 \
+--num_classes 1000 \
+--gpus 3,4 \
+--std 0.229,0.224,0.225 \
+--mean 0.485,0.456,0.406 \
+--resize 256 \
+--crop 224 \
+--exp_act kl \
+--bfp_act_chnl 256 \
+--bfp_weight_chnl 128 \
+--bfp_quant 1 \
+--num_examples 40 \
+--hooks Conv2d,Linear \
+--act_bins_factor 6 2>&1  | tee log/bit_width_explore/vgg16/vgg16_m6_e8.txt
+
+python -m tools.bfp_quant --model_name vgg16 \
+--dataset_dir /mnt/ccnas2/bdp/hf17/Datasets/Imagenet12/ \
+--mantisa_bit 5 \
+--exp_bit 8 \
+--batch_size 64 \
+--num_workers 8 \
+--num_classes 1000 \
+--gpus 3,4 \
+--std 0.229,0.224,0.225 \
+--mean 0.485,0.456,0.406 \
+--resize 256 \
+--crop 224 \
+--exp_act kl \
+--bfp_act_chnl 256 \
+--bfp_weight_chnl 128 \
+--bfp_quant 1 \
+--num_examples 40 \
+--hooks Conv2d,Linear \
+--act_bins_factor 6 2>&1  | tee log/bit_width_explore/vgg16/vgg16_m5_e8.txt

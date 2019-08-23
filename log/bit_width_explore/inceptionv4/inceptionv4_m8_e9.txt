@@ -1,0 +1,289 @@
+INFO:root:totally 2 gpus are using
+INFO:root:Total 168 hook inserted
+INFO:root:Collecting the statistics while running image examples....
+INFO:root:Determining the optimal exponent by minimizing the KL divergence....
+INFO:root:It took 24.620058 second to determine the optimal shared exponent for each block.
+INFO:root:The shape of collect exponents: (169,)
+INFO:root:Transferring the knowledge of pretrained model to Block-Floating-Point model
+INFO:root:Channel is not divisible by channel group while determining the opt exponent list the activation
+INFO:root:Channel is not divisible by channel group while determining the opt exponent list the activation
+INFO:root:Channel is not divisible by channel group while determining the opt exponent list the activation
+INFO:root:Channel is not divisible by channel group while determining the opt exponent list the activation
+INFO:root:Channel is not divisible by channel group while determining the opt exponent list the activation
+INFO:root:Channel is not divisible by channel group while determining the opt exponent list the activation
+INFO:root:Channel is not divisible by channel group while determining the opt exponent list the activation
+INFO:root:Channel is not divisible by channel group while determining the opt exponent list the activation
+INFO:root:Channel is not divisible by channel group while determining the opt exponent list the activation
+INFO:root:Channel is not divisible by channel group while determining the opt exponent list the activation
+INFO:root:Channel is not divisible by channel group while determining the opt exponent list the activation
+INFO:root:Channel is not divisible by channel group while determining the opt exponent list the activation
+INFO:root:Channel is not divisible by channel group while determining the opt exponent list the activation
+INFO:root:Channel is not divisible by channel group while determining the opt exponent list the activation
+INFO:root:Channel is not divisible by channel group while determining the opt exponent list the activation
+INFO:root:Channel is not divisible by channel group while determining the opt exponent list the activation
+INFO:root:Channel is not divisible by channel group while determining the opt exponent list the activation
+INFO:root:Channel is not divisible by channel group while determining the opt exponent list the activation
+INFO:root:Channel is not divisible by channel group while determining the opt exponent list the activation
+INFO:root:Channel is not divisible by channel group while determining the opt exponent list the activation
+INFO:root:Channel is not divisible by channel group while determining the opt exponent list the activation
+INFO:root:Channel is not divisible by channel group while determining the opt exponent list the activation
+INFO:root:Channel is not divisible by channel group while determining the opt exponent list the activation
+INFO:root:Channel is not divisible by channel group while determining the opt exponent list the activation
+INFO:root:Channel is not divisible by channel group while determining the opt exponent list the activation
+INFO:root:Channel is not divisible by channel group while determining the opt exponent list the activation
+INFO:root:Channel is not divisible by channel group while determining the opt exponent list the activation
+INFO:root:Channel is not divisible by channel group while determining the opt exponent list the activation
+INFO:root:It took 48.469931 seconds for transfer learning
+INFO:root:Evaluation Block Floating Point quantization....
+INFO:root:Current images: 200
+INFO:root:Current images: 400
+INFO:root:Current images: 600
+INFO:root:Current images: 800
+INFO:root:Current images: 1000
+INFO:root:Current images: 1200
+INFO:root:Current images: 1400
+INFO:root:Current images: 1600
+INFO:root:Current images: 1800
+INFO:root:Current images: 2000
+INFO:root:Current images: 2200
+INFO:root:Current images: 2400
+INFO:root:Current images: 2600
+INFO:root:Current images: 2800
+INFO:root:Current images: 3000
+INFO:root:Current images: 3200
+INFO:root:Current images: 3400
+INFO:root:Current images: 3600
+INFO:root:Current images: 3800
+INFO:root:Current images: 4000
+INFO:root:Current images: 4200
+INFO:root:Current images: 4400
+INFO:root:Current images: 4600
+INFO:root:Current images: 4800
+INFO:root:Current images: 5000
+INFO:root:Current images: 5200
+INFO:root:Current images: 5400
+INFO:root:Current images: 5600
+INFO:root:Current images: 5800
+INFO:root:Current images: 6000
+INFO:root:Current images: 6200
+INFO:root:Current images: 6400
+INFO:root:Current images: 6600
+INFO:root:Current images: 6800
+INFO:root:Current images: 7000
+INFO:root:Current images: 7200
+INFO:root:Current images: 7400
+INFO:root:Current images: 7600
+INFO:root:Current images: 7800
+INFO:root:Current images: 8000
+INFO:root:Current images: 8200
+INFO:root:Current images: 8400
+INFO:root:Current images: 8600
+INFO:root:Current images: 8800
+INFO:root:Current images: 9000
+INFO:root:Current images: 9200
+INFO:root:Current images: 9400
+INFO:root:Current images: 9600
+INFO:root:Current images: 9800
+INFO:root:Current images: 10000
+INFO:root:Current images: 10200
+INFO:root:Current images: 10400
+INFO:root:Current images: 10600
+INFO:root:Current images: 10800
+INFO:root:Current images: 11000
+INFO:root:Current images: 11200
+INFO:root:Current images: 11400
+INFO:root:Current images: 11600
+INFO:root:Current images: 11800
+INFO:root:Current images: 12000
+INFO:root:Current images: 12200
+INFO:root:Current images: 12400
+INFO:root:Current images: 12600
+INFO:root:Current images: 12800
+INFO:root:Current images: 13000
+INFO:root:Current images: 13200
+INFO:root:Current images: 13400
+INFO:root:Current images: 13600
+INFO:root:Current images: 13800
+INFO:root:Current images: 14000
+INFO:root:Current images: 14200
+INFO:root:Current images: 14400
+INFO:root:Current images: 14600
+INFO:root:Current images: 14800
+INFO:root:Current images: 15000
+INFO:root:Current images: 15200
+INFO:root:Current images: 15400
+INFO:root:Current images: 15600
+INFO:root:Current images: 15800
+INFO:root:Current images: 16000
+INFO:root:Current images: 16200
+INFO:root:Current images: 16400
+INFO:root:Current images: 16600
+INFO:root:Current images: 16800
+INFO:root:Current images: 17000
+INFO:root:Current images: 17200
+INFO:root:Current images: 17400
+INFO:root:Current images: 17600
+INFO:root:Current images: 17800
+INFO:root:Current images: 18000
+INFO:root:Current images: 18200
+INFO:root:Current images: 18400
+INFO:root:Current images: 18600
+INFO:root:Current images: 18800
+INFO:root:Current images: 19000
+INFO:root:Current images: 19200
+INFO:root:Current images: 19400
+INFO:root:Current images: 19600
+INFO:root:Current images: 19800
+INFO:root:Current images: 20000
+INFO:root:Current images: 20200
+INFO:root:Current images: 20400
+INFO:root:Current images: 20600
+INFO:root:Current images: 20800
+INFO:root:Current images: 21000
+INFO:root:Current images: 21200
+INFO:root:Current images: 21400
+INFO:root:Current images: 21600
+INFO:root:Current images: 21800
+INFO:root:Current images: 22000
+INFO:root:Current images: 22200
+INFO:root:Current images: 22400
+INFO:root:Current images: 22600
+INFO:root:Current images: 22800
+INFO:root:Current images: 23000
+INFO:root:Current images: 23200
+INFO:root:Current images: 23400
+INFO:root:Current images: 23600
+INFO:root:Current images: 23800
+INFO:root:Current images: 24000
+INFO:root:Current images: 24200
+INFO:root:Current images: 24400
+INFO:root:Current images: 24600
+INFO:root:Current images: 24800
+INFO:root:Current images: 25000
+INFO:root:Current images: 25200
+INFO:root:Current images: 25400
+INFO:root:Current images: 25600
+INFO:root:Current images: 25800
+INFO:root:Current images: 26000
+INFO:root:Current images: 26200
+INFO:root:Current images: 26400
+INFO:root:Current images: 26600
+INFO:root:Current images: 26800
+INFO:root:Current images: 27000
+INFO:root:Current images: 27200
+INFO:root:Current images: 27400
+INFO:root:Current images: 27600
+INFO:root:Current images: 27800
+INFO:root:Current images: 28000
+INFO:root:Current images: 28200
+INFO:root:Current images: 28400
+INFO:root:Current images: 28600
+INFO:root:Current images: 28800
+INFO:root:Current images: 29000
+INFO:root:Current images: 29200
+INFO:root:Current images: 29400
+INFO:root:Current images: 29600
+INFO:root:Current images: 29800
+INFO:root:Current images: 30000
+INFO:root:Current images: 30200
+INFO:root:Current images: 30400
+INFO:root:Current images: 30600
+INFO:root:Current images: 30800
+INFO:root:Current images: 31000
+INFO:root:Current images: 31200
+INFO:root:Current images: 31400
+INFO:root:Current images: 31600
+INFO:root:Current images: 31800
+INFO:root:Current images: 32000
+INFO:root:Current images: 32200
+INFO:root:Current images: 32400
+INFO:root:Current images: 32600
+INFO:root:Current images: 32800
+INFO:root:Current images: 33000
+INFO:root:Current images: 33200
+INFO:root:Current images: 33400
+INFO:root:Current images: 33600
+INFO:root:Current images: 33800
+INFO:root:Current images: 34000
+INFO:root:Current images: 34200
+INFO:root:Current images: 34400
+INFO:root:Current images: 34600
+INFO:root:Current images: 34800
+INFO:root:Current images: 35000
+INFO:root:Current images: 35200
+INFO:root:Current images: 35400
+INFO:root:Current images: 35600
+INFO:root:Current images: 35800
+INFO:root:Current images: 36000
+INFO:root:Current images: 36200
+INFO:root:Current images: 36400
+INFO:root:Current images: 36600
+INFO:root:Current images: 36800
+INFO:root:Current images: 37000
+INFO:root:Current images: 37200
+INFO:root:Current images: 37400
+INFO:root:Current images: 37600
+INFO:root:Current images: 37800
+INFO:root:Current images: 38000
+INFO:root:Current images: 38200
+INFO:root:Current images: 38400
+INFO:root:Current images: 38600
+INFO:root:Current images: 38800
+INFO:root:Current images: 39000
+INFO:root:Current images: 39200
+INFO:root:Current images: 39400
+INFO:root:Current images: 39600
+INFO:root:Current images: 39800
+INFO:root:Current images: 40000
+INFO:root:Current images: 40200
+INFO:root:Current images: 40400
+INFO:root:Current images: 40600
+INFO:root:Current images: 40800
+INFO:root:Current images: 41000
+INFO:root:Current images: 41200
+INFO:root:Current images: 41400
+INFO:root:Current images: 41600
+INFO:root:Current images: 41800
+INFO:root:Current images: 42000
+INFO:root:Current images: 42200
+INFO:root:Current images: 42400
+INFO:root:Current images: 42600
+INFO:root:Current images: 42800
+INFO:root:Current images: 43000
+INFO:root:Current images: 43200
+INFO:root:Current images: 43400
+INFO:root:Current images: 43600
+INFO:root:Current images: 43800
+INFO:root:Current images: 44000
+INFO:root:Current images: 44200
+INFO:root:Current images: 44400
+INFO:root:Current images: 44600
+INFO:root:Current images: 44800
+INFO:root:Current images: 45000
+INFO:root:Current images: 45200
+INFO:root:Current images: 45400
+INFO:root:Current images: 45600
+INFO:root:Current images: 45800
+INFO:root:Current images: 46000
+INFO:root:Current images: 46200
+INFO:root:Current images: 46400
+INFO:root:Current images: 46600
+INFO:root:Current images: 46800
+INFO:root:Current images: 47000
+INFO:root:Current images: 47200
+INFO:root:Current images: 47400
+INFO:root:Current images: 47600
+INFO:root:Current images: 47800
+INFO:root:Current images: 48000
+INFO:root:Current images: 48200
+INFO:root:Current images: 48400
+INFO:root:Current images: 48600
+INFO:root:Current images: 48800
+INFO:root:Current images: 49000
+INFO:root:Current images: 49200
+INFO:root:Current images: 49400
+INFO:root:Current images: 49600
+INFO:root:Current images: 49800
+INFO:root:Current images: 50000
+INFO:root:Total: 50000, Accuracy: 0.798820 
+INFO:root:Floating conv weight and fc(act and weight), act bins_factor is 5,fc bins_factor is 3, exp_opt for act is kl, act group is -1

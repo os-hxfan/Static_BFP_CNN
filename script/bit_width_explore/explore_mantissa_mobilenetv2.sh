@@ -1,0 +1,159 @@
+python -m tools.bfp_quant --model_name mobilenetv2 \
+--dataset_dir /mnt/ccnas2/bdp/hf17/Datasets/Imagenet12/ \
+--mantisa_bit 12 \
+--exp_bit 8 \
+--batch_size 100 \
+--num_workers 8 \
+--num_classes 1000 \
+--gpus 5 \
+--std 0.229,0.224,0.225 \
+--mean 0.485,0.456,0.406 \
+--resize 256 \
+--crop 224 \
+--exp_act kl \
+--bfp_act_chnl -1 \
+--bfp_weight_chnl 64 \
+--bfp_quant 1 \
+--num_examples 100 \
+--hooks BatchNorm2d,Linear \
+--act_bins_factor 2  2>&1 | tee log/bit_width_explore/mobilenetv2/mobilenetv2_m12_e8.txt
+
+python -m tools.bfp_quant --model_name mobilenetv2 \
+--dataset_dir /mnt/ccnas2/bdp/hf17/Datasets/Imagenet12/ \
+--mantisa_bit 11 \
+--exp_bit 8 \
+--batch_size 100 \
+--num_workers 8 \
+--num_classes 1000 \
+--gpus 5 \
+--std 0.229,0.224,0.225 \
+--mean 0.485,0.456,0.406 \
+--resize 256 \
+--crop 224 \
+--exp_act kl \
+--bfp_act_chnl -1 \
+--bfp_weight_chnl 64 \
+--bfp_quant 1 \
+--num_examples 100 \
+--hooks BatchNorm2d,Linear \
+--act_bins_factor 2  2>&1 | tee log/bit_width_explore/mobilenetv2/mobilenetv2_m11_e8.txt
+
+python -m tools.bfp_quant --model_name mobilenetv2 \
+--dataset_dir /mnt/ccnas2/bdp/hf17/Datasets/Imagenet12/ \
+--mantisa_bit 10 \
+--exp_bit 8 \
+--batch_size 100 \
+--num_workers 8 \
+--num_classes 1000 \
+--gpus 5 \
+--std 0.229,0.224,0.225 \
+--mean 0.485,0.456,0.406 \
+--resize 256 \
+--crop 224 \
+--exp_act kl \
+--bfp_act_chnl -1 \
+--bfp_weight_chnl 64 \
+--bfp_quant 1 \
+--num_examples 100 \
+--hooks BatchNorm2d,Linear \
+--act_bins_factor 2  2>&1 | tee log/bit_width_explore/mobilenetv2/mobilenetv2_m10_e8.txt
+
+python -m tools.bfp_quant --model_name mobilenetv2 \
+--dataset_dir /mnt/ccnas2/bdp/hf17/Datasets/Imagenet12/ \
+--mantisa_bit 9 \
+--exp_bit 8 \
+--batch_size 100 \
+--num_workers 8 \
+--num_classes 1000 \
+--gpus 5 \
+--std 0.229,0.224,0.225 \
+--mean 0.485,0.456,0.406 \
+--resize 256 \
+--crop 224 \
+--exp_act kl \
+--bfp_act_chnl -1 \
+--bfp_weight_chnl 64 \
+--bfp_quant 1 \
+--num_examples 100 \
+--hooks BatchNorm2d,Linear \
+--act_bins_factor 2  2>&1 | tee log/bit_width_explore/mobilenetv2/mobilenetv2_m9_e8.txt
+
+python -m tools.bfp_quant --model_name mobilenetv2 \
+--dataset_dir /mnt/ccnas2/bdp/hf17/Datasets/Imagenet12/ \
+--mantisa_bit 8 \
+--exp_bit 8 \
+--batch_size 100 \
+--num_workers 8 \
+--num_classes 1000 \
+--gpus 5 \
+--std 0.229,0.224,0.225 \
+--mean 0.485,0.456,0.406 \
+--resize 256 \
+--crop 224 \
+--exp_act kl \
+--bfp_act_chnl -1 \
+--bfp_weight_chnl 64 \
+--bfp_quant 1 \
+--num_examples 100 \
+--hooks BatchNorm2d,Linear \
+--act_bins_factor 2  2>&1 | tee log/bit_width_explore/mobilenetv2/mobilenetv2_m8_e8.txt
+
+python -m tools.bfp_quant --model_name mobilenetv2 \
+--dataset_dir /mnt/ccnas2/bdp/hf17/Datasets/Imagenet12/ \
+--mantisa_bit 7 \
+--exp_bit 8 \
+--batch_size 100 \
+--num_workers 8 \
+--num_classes 1000 \
+--gpus 5 \
+--std 0.229,0.224,0.225 \
+--mean 0.485,0.456,0.406 \
+--resize 256 \
+--crop 224 \
+--exp_act kl \
+--bfp_act_chnl -1 \
+--bfp_weight_chnl 64 \
+--bfp_quant 1 \
+--num_examples 100 \
+--hooks BatchNorm2d,Linear \
+--act_bins_factor 2  2>&1 | tee log/bit_width_explore/mobilenetv2/mobilenetv2_m7_e8.txt
+
+python -m tools.bfp_quant --model_name mobilenetv2 \
+--dataset_dir /mnt/ccnas2/bdp/hf17/Datasets/Imagenet12/ \
+--mantisa_bit 6 \
+--exp_bit 8 \
+--batch_size 100 \
+--num_workers 8 \
+--num_classes 1000 \
+--gpus 5 \
+--std 0.229,0.224,0.225 \
+--mean 0.485,0.456,0.406 \
+--resize 256 \
+--crop 224 \
+--exp_act kl \
+--bfp_act_chnl -1 \
+--bfp_weight_chnl 64 \
+--bfp_quant 1 \
+--num_examples 100 \
+--hooks BatchNorm2d,Linear \
+--act_bins_factor 2  2>&1 | tee log/bit_width_explore/mobilenetv2/mobilenetv2_m6_e8.txt
+
+python -m tools.bfp_quant --model_name mobilenetv2 \
+--dataset_dir /mnt/ccnas2/bdp/hf17/Datasets/Imagenet12/ \
+--mantisa_bit 5 \
+--exp_bit 8 \
+--batch_size 100 \
+--num_workers 8 \
+--num_classes 1000 \
+--gpus 5 \
+--std 0.229,0.224,0.225 \
+--mean 0.485,0.456,0.406 \
+--resize 256 \
+--crop 224 \
+--exp_act kl \
+--bfp_act_chnl -1 \
+--bfp_weight_chnl 64 \
+--bfp_quant 1 \
+--num_examples 100 \
+--hooks BatchNorm2d,Linear \
+--act_bins_factor 2  2>&1 | tee log/bit_width_explore/mobilenetv2/mobilenetv2_m5_e8.txt
