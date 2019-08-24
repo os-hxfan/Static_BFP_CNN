@@ -50,6 +50,11 @@ Here is the implementation of above BFP quantization process: [here](https://git
 
 ## 2.3. How to test resnet50 and inceptionv4
 Make sure you have installed [Pytorch.0.4.1](https://pytorch.org/get-started/previous-versions/).
+```
+pip install torch==0.4.1
+pip install torchvision==0.2.1
+pip install pretrainedmodels
+```
 Then you can run
 ```
 sh script/bfp_quant_resnet.sh
