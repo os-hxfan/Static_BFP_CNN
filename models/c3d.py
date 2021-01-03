@@ -161,7 +161,7 @@ class C3D_BFP(nn.Module):
     """
 
     def __init__(self, num_classes, pretrained=False):
-        super(C3D, self).__init__()
+        super(C3D_BFP, self).__init__()
 
         self.conv1 = nn.Conv3d(3, 64, kernel_size=(3, 3, 3), padding=(1, 1, 1))
         self.pool1 = nn.MaxPool3d(kernel_size=(1, 2, 2), stride=(1, 2, 2))
@@ -260,7 +260,7 @@ class C3D_BFP(nn.Module):
                         "classifier.3.bias": "fc7.bias",
                         }
 
-        p_dict = torch.load("/mnt/ccnas2/bdp/hf17/TCAD_3DCNNs")
+        p_dict = torch.load("/mnt/ccnas2/bdp/hf17/TCAD_3DCNNs/c3d-pretrained.pth")
         s_dict = self.state_dict()
         for name in p_dict:
             if name not in corresp_name:
@@ -281,7 +281,7 @@ class C3D_BFP(nn.Module):
 
 if __name__ == "__main__":
     inputs = torch.rand(1, 3, 16, 112, 112)
-    net = C3D(num_classes=101, pretrained=True)
+    net = C3D_BFP(num_classes=101, pretrained=True)
 
     outputs = net.forward(inputs)
     print(outputs.size())
