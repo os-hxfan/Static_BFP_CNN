@@ -217,6 +217,29 @@ def find_exp_KL_act(array, MANTISSA_WIDTH, EXPONENT_WIDTH, group=1, eps=0.0001, 
     #print ("kl div:", min_kl_div)
     return opt_exp, max_exp
 
+def find_exp_act_3d(array, MANTISSA_WIDTH, EXPONENT_WIDTH, group = 1, eps=0.0001, bins_factor=3):
+    # Find the proper exponent value instead of max_exp by minimize the KL_divergence
+    #   num_bins is used to construct the histogram/distribution
+    #   eps is used to smooth the histogram/distribution
+    # Assuming the input has shape [batch, channel, height*width]
+    array = array.cuda()
+    orig_shape = array.shape
+    group = orig_shape[1] if ((group==-1) or (group>orig_shape[1])) else group # group is whole channel when group is -1
+    number_of_blocks = math.ceil(orig_shape[1]/group)
+    opt_exp = []
+    max_exp = []
+    num_frame = orig_shape[2]
+    if orig_shape[1] % group == 0:
+        for i in range(num_frame):
+            frame = array[:, :, i, :]
+            opt_e, max_e = find_exp_KL_act(frame, MANTISSA_WIDTH, EXPONENT_WIDTH, group=group, eps=eps,
+                            bins_factor=bins_factor)
+            max_exp = max_exp + max_e
+            opt_exp = opt_exp + opt_e
+    else:
+        raise NotImplementedError
+    return opt_exp, max_exp
+
 def find_exp_act(array, MANTISSA_WIDTH, EXPONENT_WIDTH, group = 1, eps=0.0001, bins_factor=3):
     # Find the proper exponent value instead of max_exp by minimize the KL_divergence
     #   num_bins is used to construct the histogram/distribution
@@ -438,6 +461,24 @@ def find_exp_weight(array, MANTISSA_WIDTH, EXPONENT_WIDTH, group = 1, eps=0.0001
                                             num_bins=num_bins)
         quant_array=torch.cat((quant_array1, quant_array2), 1)
         opt_exp = np.concatenate((opt_exp1, opt_exp2), axis=1)
+    return quant_array, opt_exp
+
+def find_exp_weight_3d(array, MANTISSA_WIDTH, EXPONENT_WIDTH, group = 1, eps=0.0001, num_bins=64):
+    # Find the proper exponent value instead of max_exp by minimize the KL_divergence
+    #   num_bins is used to construct the histogram/distribution
+    #   eps is used to smooth the histogram/distribution
+    # Assuming the input has shape [batch, channel, height*width]
+    array = array.cuda()
+    orig_shape = array.shape
+    array = torch.reshape(array, (orig_shape[0], orig_shape[1], orig_shape[2], orig_shape[3]*orig_shape[4])) 
+    group = orig_shape[1] if ((group==-1) or (group>orig_shape[1])) else group # group is whole channel when group is -1
+    number_of_blocks = math.ceil(orig_shape[1]/group)
+    if orig_shape[1] % group == 0:
+        quant_array, opt_exp = find_exp_KL_weight(array, MANTISSA_WIDTH, EXPONENT_WIDTH, group=group, eps=eps,
+                            num_bins=num_bins)
+    else:
+        NotImplemented
+    quant_array = torch.reshape(quant_array, (orig_shape[0], orig_shape[1], orig_shape[2], orig_shape[3], orig_shape[4]))
     return quant_array, opt_exp
 
 def bfp_quant_weight_KL(array, MANTISSA_WIDTH, EXPONENT_WIDTH, group = 1, eps=0.0001):

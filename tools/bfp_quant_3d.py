@@ -1,8 +1,9 @@
 # Internal
-from models import model_factory
+from models import model_factory_3d
 from lib import Stat_Collector
 from lib import Utils
 from models import inceptionv4
+from lib.dataset import VideoDataset
 #from models import bfp_modules
 
 # The Basic Library
@@ -29,16 +30,8 @@ import pretrainedmodels
 
 writer = SummaryWriter("./tensorboard/statistics")
 
-modules_map = {  "BatchNorm2d" : nn.BatchNorm2d,
-                 "Linear" : nn.Linear,
-                 "Conv2d" :  nn.Conv2d,
-                 "Inception_C" : inceptionv4.Inception_C,
-                 "Reduction_B" : inceptionv4.Reduction_B,
-                 "Inception_B" : inceptionv4.Inception_B,
-                 "Reduction_A" : inceptionv4.Reduction_A,
-                 "Inception_A" : inceptionv4.Inception_A,
-                 "Mixed_5a" : inceptionv4.Mixed_5a,
-                 "Mixed_4a" : inceptionv4.Mixed_4a
+modules_map = {  "Linear" : nn.Linear,
+                 "Conv3d" :  nn.Conv3d
 }
 
 # Perform the Block Floting Quantization(BFP) on given model
@@ -55,26 +48,31 @@ def bfp_quant(model_name, dataset_dir, num_classes, gpus, mantisa_bit, exp_bit, 
     normalize = transforms.Normalize(mean=mean,
                                      std=std)
 
-    # for collect intermediate data use
-    collect_loader = torch.utils.data.DataLoader(
-        datasets.ImageFolder(valdir, transforms.Compose([
-            transforms.Resize(resize),
-            transforms.CenterCrop(crop),
-            transforms.ToTensor(),
-            normalize,
-        ])),
-        batch_size=num_examples, shuffle=False,
-        num_workers=num_workers, pin_memory=True)
-    # for validate the bfp model use
-    val_loader = torch.utils.data.DataLoader(
-        datasets.ImageFolder(valdir, transforms.Compose([
-            transforms.Resize(resize),
-            transforms.CenterCrop(crop),
-            transforms.ToTensor(),
-            normalize,
-        ])),
-        batch_size=batch_size, shuffle=False,
-        num_workers=num_workers, pin_memory=True)
+
+    train_dataloader = DataLoader(VideoDataset(dataset=dataset, split='train',clip_len=16), batch_size=20, shuffle=True, num_workers=4)
+    val_dataloader   = DataLoader(VideoDataset(dataset=dataset, split='val',  clip_len=16), batch_size=20, num_workers=4)
+    test_dataloader  = DataLoader(VideoDataset(dataset=dataset, split='test', clip_len=16), batch_size=20, num_workers=4)
+
+    # # for collect intermediate data use
+    # collect_loader = torch.utils.data.DataLoader(
+    #     datasets.ImageFolder(valdir, transforms.Compose([
+    #         transforms.Resize(resize),
+    #         transforms.CenterCrop(crop),
+    #         transforms.ToTensor(),
+    #         normalize,
+    #     ])),
+    #     batch_size=num_examples, shuffle=False,
+    #     num_workers=num_workers, pin_memory=True)
+    # # for validate the bfp model use
+    # val_loader = torch.utils.data.DataLoader(
+    #     datasets.ImageFolder(valdir, transforms.Compose([
+    #         transforms.Resize(resize),
+    #         transforms.CenterCrop(crop),
+    #         transforms.ToTensor(),
+    #         normalize,
+    #     ])),
+    #     batch_size=batch_size, shuffle=False,
+    #     num_workers=num_workers, pin_memory=True)
 
 
     # Loading the model
@@ -91,7 +89,7 @@ def bfp_quant(model_name, dataset_dir, num_classes, gpus, mantisa_bit, exp_bit, 
     logging.info("Collecting the statistics while running image examples....")
     images_statistc = torch.empty((1))
     with torch.no_grad():
-        for i_batch, (images, lables) in enumerate(collect_loader):
+        for i_batch, (images, lables) in enumerate(test_dataloader):
             images = images.cuda()
             outputs = model(images)
             #print(lables)
@@ -100,7 +98,7 @@ def bfp_quant(model_name, dataset_dir, num_classes, gpus, mantisa_bit, exp_bit, 
             # Collect the input data
             image_shape = images.shape
             images_statistc = torch.reshape(images, 
-                                    (image_shape[0], image_shape[1], image_shape[2]*image_shape[3]))
+                                    (image_shape[0], image_shape[1], image_shape[2], image_shape[3]*image_shape[4]))
             break
     
     # Deternmining the optimal exponent of activation and
@@ -110,70 +108,19 @@ def bfp_quant(model_name, dataset_dir, num_classes, gpus, mantisa_bit, exp_bit, 
     opt_exp_act_list = []
     max_exp_act_list = []
     # For original input
-    opt_exp, max_exp = Utils.find_exp_act(images_statistc, mantisa_bit, exp_bit, group=3, eps=eps, bins_factor=act_bins_factor)
+    opt_exp, max_exp = Utils.find_exp_act_3d(images_statistc, mantisa_bit, exp_bit, group=3, eps=eps, bins_factor=act_bins_factor)
     opt_exp_act_list.append(opt_exp)
     max_exp_act_list.append(max_exp)
-    sc_layer_num = [7,10,17,20,23,30,33,36,39,42,49,52]
-    ds_sc_layer_num = [14,27,46]
-    mobilev2_sc_layer_num = [9,15,18,24,27,30,36,39,45,48]
     for i, intern_output in enumerate(intern_outputs):
-        #print ("No.", i, " ", intern_output.out_features.shape)
-        # ploting the distribution
-        #writer.add_histogram("conv%d" % (i), 
-        #                intern_output.out_features.cpu().data.numpy(), bins='auto')
         #Deternmining the optimal exponent by minimizing the KL_Divergence in channel-wise manner
-        if (isinstance(intern_output.m, nn.Conv2d) or isinstance(intern_output.m, nn.BatchNorm2d)):
+        if (isinstance(intern_output.m, nn.Conv3d) or isinstance(intern_output.m, nn.BatchNorm2d)):
             intern_shape = intern_output.out_features.shape
-            #print (intern_shape, "No.", i)
-            # assmue internal activation has shape: (batch, channel, height, width)
-            
-            if ((model_name=="resnet50") and (i in sc_layer_num)):
-                #print ("Before:", intern_shape[1])
-                intern_features1 = intern_output.out_features
-                intern_features2 = intern_outputs[i-3].out_features
-                intern_features = torch.cat((intern_features1, intern_features2), 0)
-                intern_features = torch.reshape(intern_features, (2*intern_shape[0], intern_shape[1],
-                                                intern_shape[2]*intern_shape[3]))
-                #print (intern_features.shape)
-                opt_exp, max_exp = Utils.find_exp_act(intern_features, mantisa_bit, exp_bit, 
-                                                group = bfp_act_chnl, eps=eps, bins_factor=act_bins_factor)
-                opt_exp_act_list.append(opt_exp)
-                max_exp_act_list.append(max_exp)
-                #print ("After:", len(opt_exp))
-            elif ((model_name=="resnet50") and (i in ds_sc_layer_num)):
-                intern_features1 = intern_output.out_features
-                intern_features2 = intern_outputs[i-1].out_features
-                intern_features = torch.cat((intern_features1, intern_features2), 0)
-                intern_features = torch.reshape(intern_features, (2*intern_shape[0], intern_shape[1],
-                                                intern_shape[2]*intern_shape[3]))
-                #print (intern_features.shape)
-                opt_exp, max_exp = Utils.find_exp_act(intern_features, mantisa_bit, exp_bit, 
-                                                group = bfp_act_chnl, eps=eps, bins_factor=act_bins_factor)
-                #print ("Current shape", np.shape(opt_exp), " No.", i)
-                #print ("Previous shape", np.shape(opt_exp_act_list[i]), " No.", i-1)
-                opt_exp_act_list.append(opt_exp)
-                max_exp_act_list.append(max_exp)
-                opt_exp_act_list[i]=(opt_exp) #Starting from 1
-                max_exp_act_list[i]=(max_exp) 
-            elif ((model_name=="mobilenetv2") and (i in mobilev2_sc_layer_num)):
-                intern_features1 = intern_output.out_features
-                intern_features2 = intern_outputs[i-3].out_features
-                intern_features = torch.cat((intern_features1, intern_features2), 0)
-                intern_features = torch.reshape(intern_features, (2*intern_shape[0], intern_shape[1],
-                                                intern_shape[2]*intern_shape[3]))
-                #print (intern_features.shape)
-                opt_exp, max_exp = Utils.find_exp_act(intern_features, mantisa_bit, exp_bit, 
-                                                group = bfp_act_chnl, eps=eps, bins_factor=act_bins_factor)
-                opt_exp_act_list.append(opt_exp) ##changed
-                max_exp_act_list.append(max_exp)
-            else:
-                intern_features = torch.reshape(intern_output.out_features, 
-                                (intern_shape[0], intern_shape[1], intern_shape[2]*intern_shape[3]))
-                opt_exp, max_exp = Utils.find_exp_act(intern_features, mantisa_bit, exp_bit, 
-                                                group = bfp_act_chnl, eps=eps, bins_factor=act_bins_factor)
-                opt_exp_act_list.append(opt_exp) ##changed
-                max_exp_act_list.append(max_exp)
-            #print (np.shape(opt_exp), " No.", i)
+            intern_features = torch.reshape(intern_output.out_features,
+                            (image_shape[0], image_shape[1], image_shape[2], image_shape[3]*image_shape[4]))
+            opt_exp, max_exp = Utils.find_exp_act_3d(intern_features, mantisa_bit, exp_bit, 
+                                            group = bfp_act_chnl, eps=eps, bins_factor=act_bins_factor)
+            opt_exp_act_list.append(opt_exp) ##changed
+            max_exp_act_list.append(max_exp)
         elif (isinstance(intern_output.m, nn.Linear)):
             intern_shape = intern_output.out_features.shape
             opt_exp, max_exp = Utils.find_exp_fc(intern_output.out_features, mantisa_bit, exp_bit, block_size = intern_shape[1], eps=eps, bins_factor=fc_bins_factor)
@@ -181,6 +128,8 @@ def bfp_quant(model_name, dataset_dir, num_classes, gpus, mantisa_bit, exp_bit, 
             opt_exp_act_list.append(max_exp)
             max_exp_act_list.append(max_exp)
         else:
+            pass
+            '''
             intern_shape = intern_output.in_features[0].shape
             intern_features = torch.reshape(intern_output.in_features[0], 
                                 (intern_shape[0], intern_shape[1], intern_shape[2]*intern_shape[3]))
@@ -188,6 +137,7 @@ def bfp_quant(model_name, dataset_dir, num_classes, gpus, mantisa_bit, exp_bit, 
                                                 group = bfp_act_chnl, eps=eps, bins_factor=act_bins_factor)
             opt_exp_act_list.append(opt_exp)
             max_exp_act_list.append(max_exp)
+            '''
             
         #logging.info("The internal shape: %s" % ((str)(intern_output.out_features.shape)))
     end = time.time()
@@ -202,40 +152,8 @@ def bfp_quant(model_name, dataset_dir, num_classes, gpus, mantisa_bit, exp_bit, 
         exp_act_list = max_exp_act_list
     if (is_online == 1):
         model_name = "br_" + model_name
-    bfp_model, weight_exp_list = model_factory.get_network(model_name, pretrained=True, bfp=(bfp_quant==1), group=bfp_weight_chnl, mantisa_bit=mantisa_bit, 
+    bfp_model, weight_exp_list = model_factory_3d.get_network(model_name, pretrained=True, bfp=(bfp_quant==1), group=bfp_weight_chnl, mantisa_bit=mantisa_bit, 
                 exp_bit=exp_bit, opt_exp_act_list=exp_act_list)
-    
-    '''
-    print ("Test, length of weight list", len(weight_exp_list))
-    for i, weight_exp in enumerate(weight_exp_list):
-        if (np.shape(weight_exp)[1] == np.shape(exp_act_list[i])[0]):
-            input_exp = exp_act_list[i]
-        else:
-            input_exp = exp_act_list[i-3] # Shortcut
-
-        if (((i+1)<len(weight_exp_list)) and (np.shape(weight_exp_list[i+1])[1] != np.shape(exp_act_list[i+1])[0])):
-            output_exp = exp_act_list[i+2]
-        else:
-            output_exp = exp_act_list[i+1] # Shortcut
-        max_shift = -1
-        print ("No.", i, ": weight:", np.shape(weight_exp), " input:", np.shape(input_exp), " output:", np.shape(output_exp))
-        for flter in range(np.shape(weight_exp)[0]):
-            for chnl in range(np.shape(weight_exp)[1]):
-                if (weight_exp[flter][chnl] < -16):
-                    continue
-                mul_exp = weight_exp[flter][chnl] + input_exp[chnl]
-                cur_shift = abs(output_exp[flter] - mul_exp)
-                assert (cur_shift <= 16), "Exceed the maximal shift bits"
-                max_shift = max_shift if (cur_shift < max_shift) else cur_shift
-        print ("Max shift:", max_shift)
-    sys.exit() 
-    '''
-
-    # Runing on dataset to test accuracy
-    #model = model_factory.get_network(model_name, pretrained=True)
-    #model = pretrainedmodels.__dict__[model_name](num_classes=1000, pretrained='imagenet')
-    #model.cuda()
-    #model.eval()
 
     #torch.cuda.empty_cache() 
     logging.info("Evaluation Block Floating Point quantization....")
@@ -246,7 +164,7 @@ def bfp_quant(model_name, dataset_dir, num_classes, gpus, mantisa_bit, exp_bit, 
     bfp_model.cuda()
     bfp_model.eval()
     with torch.no_grad():
-        for i_batch, (images, lables) in enumerate(val_loader):
+        for i_batch, (images, lables) in enumerate(test_dataloader):
             images = images.cuda()
             outputs = bfp_model(images)
             #outputs = model(images)

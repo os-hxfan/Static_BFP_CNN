@@ -119,4 +119,31 @@ def transform_activation_offline(tensor, exponent, mantissa, opt_exp_list):
 
     return tensor
 
+def transform_activation_offline_3d(tensor, exponent, mantissa, opt_exp_list):
+    # Offline means the shared exponent is fixed
+    #      it is deternmined during the pre-inference
+    # Quantize the activation tensor along channel dimension
+    # Here we require the input tensor has the shape: [batch, channel, heigh, widht]
+    # opt_exp_list: the shared exponent list for offline quantization
+    shp = tensor.shape
+    #print ("shape1:", shp[1], " opt_exp_list:", len(opt_exp_list))
+    num_frame = shp[2]
+    assert len(opt_exp_list) == num_frame
+    chnl_group = (int)(shp[1]/len(opt_exp_list))
+    number_of_blocks = math.ceil(shp[1]/chnl_group) * num_frame # use different exp for different frame
+    opt_exp_list = torch.Tensor(opt_exp_list).cuda()
+    if shp[1] % chnl_group == 0:
+        # shp[1] is divisible by block size
+        # Therefore just one tensor will be created
+        tensor = torch.reshape(tensor, (shp[0], number_of_blocks, chnl_group*shp[2]*shp[3]))
+        opt_exp_list = opt_exp_list.unsqueeze(0) ##### Need Unit test
+        tensor = to_exponent_mantissa_width(tensor, opt_exp_list, mantissa, quant_dim=len(tensor.shape)-1)
+        tensor = torch.reshape(tensor, (shp[0], shp[1], shp[2], shp[3], shp[4]))
+        return tensor
+
+    else:
+        raise NotImplementedError
+
+    return tensor
+
 
