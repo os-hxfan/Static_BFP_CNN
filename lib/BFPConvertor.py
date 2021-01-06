@@ -194,13 +194,13 @@ class BFPConvertor_3D:
                     bmod.weight.data, opt_exp_list = find_exp_weight_3d(conv_weight[k], self.mantisa_bit, self.exp_bit, group, eps=0.000000001, num_bins=32)
                     #opt_exp_list = opt_exp_list.int().cpu().data.tolist()
                     weight_exp_list.append(opt_exp_list)
-                    if (conv_isbias or (len(bn_weight) != 0)):
+                    if (conv_isbias):
                         bmod.bias.data = bfp_quant_bias_KL(conv_bias[k], 16) # set mantissa as 2*(10-2)=16, assume in hardware we can 16-bit fraction      
                 else:
                     bmod.weight.data, max_exp_list = bfp_quant_weight_KL(conv_weight[k], self.mantisa_bit, self.exp_bit, group)
                     #max_exp_list = max_exp_list.int().cpu().data.tolist()
                     weight_exp_list.append(max_exp_list)
-                    if (conv_isbias or (len(bn_weight) != 0)):
+                    if (conv_isbias):
                         bmod.bias.data = bfp_quant_bias_KL(conv_bias[k], 16) # set mantissa as 2*(10-2)=16, assume in hardware we can 16-bit fraction
                 #bmod.weight.data = conv_weight[k]
                 #bmod.bias.data = conv_bias[k]

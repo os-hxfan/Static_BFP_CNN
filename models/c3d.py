@@ -18,7 +18,7 @@ class c3d(nn.Module):
 
     def __init__(self, num_classes, pretrained=False):
         super(c3d, self).__init__()
-
+        print ("Construct original C3D model")
         self.conv1 = nn.Conv3d(3, 64, kernel_size=(3, 3, 3), padding=(1, 1, 1))
         self.pool1 = nn.MaxPool3d(kernel_size=(1, 2, 2), stride=(1, 2, 2))
 
@@ -54,7 +54,7 @@ class c3d(nn.Module):
 
         x = self.relu(self.conv1(x))
         x = self.pool1(x)
-
+        #print (x.shape)
         x = self.relu(self.conv2(x))
         x = self.pool2(x)
 
@@ -68,8 +68,9 @@ class c3d(nn.Module):
 
         x = self.relu(self.conv5a(x))
         x = self.relu(self.conv5b(x))
+        #print (x.shape)
         x = self.pool5(x)
-
+        #print (x.shape)
         x = x.view(-1, 8192)
         x = self.relu(self.fc6(x))
         x = self.dropout(x)
@@ -115,13 +116,20 @@ class c3d(nn.Module):
                         "classifier.3.bias": "fc7.bias",
                         }
 
-        p_dict = torch.load("/mnt/ccnas2/bdp/hf17/TCAD_3DCNNs")
+        #p_dict = torch.load("/mnt/ccnas2/bdp/hf17/TCAD_3DCNNs/c3d-pretrained.pth")
+        p_dict = torch.load("/mnt/ccnas2/bdp/hf17/TCAD_3DCNNs/C3D-ucf101_epoch-99.pth.tar")
+        print ("Loading from pretrained models")
+        self.load_state_dict(p_dict['state_dict'])
         s_dict = self.state_dict()
+        '''
         for name in p_dict:
-            if name not in corresp_name:
-                continue
-            s_dict[corresp_name[name]] = p_dict[name]
-        self.load_state_dict(s_dict)
+            if name in s_dict:
+                self.state_dict()[name] = p_dict
+                print ("Load from layer:", name)
+            else:
+                print ("not found layer:", name)
+        '''
+        #self.load_state_dict(s_dict)
 
     def __init_weight(self):
         for m in self.modules():
@@ -162,7 +170,7 @@ class c3d_bfp(nn.Module):
 
     def __init__(self, num_classes, pretrained=False, exp_bit=8, mantisa_bit=8, opt_exp_act_list=None):
         super(c3d_bfp, self).__init__()
-
+        print ("Construct BFP C3D model")
         self.exp_bit = exp_bit
         self.mantisa_bit = mantisa_bit
         self.opt_exp_act_list = opt_exp_act_list
@@ -198,61 +206,81 @@ class c3d_bfp(nn.Module):
 
     def forward(self, x):
 
-        x = self.conv1(x)
         x = BFPActivation.transform_activation_offline(x, self.exp_bit, self.mantisa_bit,
-                                                         self.opt_exp_act_list[0])
+                                                         self.opt_exp_act_list[0], is_3d=True)
+        
+        x = self.conv1(x)
+
+        x = BFPActivation.transform_activation_offline(x, self.exp_bit, self.mantisa_bit,
+                                                         self.opt_exp_act_list[1], is_3d=True)
+
         x = self.relu(x)
         x = self.pool1(x)
 
         x = self.conv2(x)
+
         x = BFPActivation.transform_activation_offline(x, self.exp_bit, self.mantisa_bit,
-                                                         self.opt_exp_act_list[1])
+                                                         self.opt_exp_act_list[2], is_3d=True)
+
         x = self.relu(x)
         x = self.pool2(x)
 
         x = self.conv3a(x)
+
         x = BFPActivation.transform_activation_offline(x, self.exp_bit, self.mantisa_bit,
-                                                         self.opt_exp_act_list[2])
+                                                         self.opt_exp_act_list[3], is_3d=True)
+
         x = self.relu(x)
         x = self.conv3b(x)
+
         x = BFPActivation.transform_activation_offline(x, self.exp_bit, self.mantisa_bit,
-                                                         self.opt_exp_act_list[3])
+                                                         self.opt_exp_act_list[4], is_3d=True)
+
         x = self.relu(x)
         x = self.pool3(x)
 
         x = self.conv4a(x)
+
         x = BFPActivation.transform_activation_offline(x, self.exp_bit, self.mantisa_bit,
-                                                         self.opt_exp_act_list[4])
+                                                         self.opt_exp_act_list[5], is_3d=True)
+
         x = self.relu(x)
         x = self.conv4b(x)
+
         x = BFPActivation.transform_activation_offline(x, self.exp_bit, self.mantisa_bit,
-                                                         self.opt_exp_act_list[5])
+                                                         self.opt_exp_act_list[6], is_3d=True)
+
         x = self.relu(x)
         x = self.pool4(x)
 
         x = self.conv5a(x)
+
         x = BFPActivation.transform_activation_offline(x, self.exp_bit, self.mantisa_bit,
-                                                         self.opt_exp_act_list[6])
+                                                         self.opt_exp_act_list[7], is_3d=True)
+
         x = self.relu(x)
         x = self.conv5b(x)
+
         x = BFPActivation.transform_activation_offline(x, self.exp_bit, self.mantisa_bit,
-                                                         self.opt_exp_act_list[7])
+                                                         self.opt_exp_act_list[8], is_3d=True)
+
         x = self.relu(x)
         x = self.pool5(x)
 
         x = x.view(-1, 8192)
         x = self.fc6(x)
-        x = BFPFullyConnet.transform_fc_offline(x, self.exp_bit, self.mantisa_bit, self.opt_exp_act_list[8])
+        x = BFPFullyConnet.transform_fc_offline(x, self.exp_bit, self.mantisa_bit, self.opt_exp_act_list[9])
         x = self.relu(x)
         x = self.dropout(x)
         x = self.fc7(x)
-        x = BFPFullyConnet.transform_fc_offline(x, self.exp_bit, self.mantisa_bit, self.opt_exp_act_list[9])
+        x = BFPFullyConnet.transform_fc_offline(x, self.exp_bit, self.mantisa_bit, self.opt_exp_act_list[10])
 
         x = self.relu(x)
         x = self.dropout(x)
 
         logits = self.fc8(x)
-        x = BFPFullyConnet.transform_fc_offline(x, self.exp_bit, self.mantisa_bit, self.opt_exp_act_list[10])
+        #print (logits.shape)
+        x = BFPFullyConnet.transform_fc_offline(logits, self.exp_bit, self.mantisa_bit, self.opt_exp_act_list[11])
 
         return logits
 
@@ -292,6 +320,7 @@ class c3d_bfp(nn.Module):
                         }
 
         p_dict = torch.load("/mnt/ccnas2/bdp/hf17/TCAD_3DCNNs/c3d-pretrained.pth")
+        p_dict = p_dict[state_dict]
         s_dict = self.state_dict()
         for name in p_dict:
             if name not in corresp_name:
@@ -312,7 +341,7 @@ class c3d_bfp(nn.Module):
 
 if __name__ == "__main__":
     inputs = torch.rand(1, 3, 16, 112, 112)
-    net = c3d_bfp(num_classes=101, pretrained=True)
+    net = c3d(num_classes=101, pretrained=True)
 
     outputs = net.forward(inputs)
     print(outputs.size())

@@ -40,6 +40,8 @@ def transform_fc_offline(tensor, exponent, mantissa, opt_exp_list):
     number_of_blocks = len(opt_exp_list)
     block_size = (int)(shp[1]/len(opt_exp_list))
     opt_exp_list = torch.Tensor(opt_exp_list).cuda()
+    #print ("shp:", shp)
+    #print ("opt_exp_list:", len(opt_exp_list))
     if shp[1] % block_size == 0:
         # shp[1] is divisible by block size
         # Therefore just one tensor will be created

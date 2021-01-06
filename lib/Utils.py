@@ -234,6 +234,8 @@ def find_exp_act_3d(array, MANTISSA_WIDTH, EXPONENT_WIDTH, group = 1, eps=0.0001
             frame = array[:, :, i, :]
             opt_e, max_e = find_exp_KL_act(frame, MANTISSA_WIDTH, EXPONENT_WIDTH, group=group, eps=eps,
                             bins_factor=bins_factor)
+            print (len(max_exp))
+            opt_e, max_e = list(opt_e), list(max_e)
             max_exp = max_exp + max_e
             opt_exp = opt_exp + opt_e
     else:

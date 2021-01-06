@@ -60,24 +60,32 @@ def transform_activation_online(tensor, exponent, mantissa, chnl_group):
 
     return tensor
 
-def transform_activation_offline(tensor, exponent, mantissa, opt_exp_list):
+def transform_activation_offline(tensor, exponent, mantissa, opt_exp_list, is_3d=False):
     # Offline means the shared exponent is fixed
     #      it is deternmined during the pre-inference
     # Quantize the activation tensor along channel dimension
     # Here we require the input tensor has the shape: [batch, channel, heigh, widht]
     # opt_exp_list: the shared exponent list for offline quantization
+    if is_3d is True:
+        orig_shape = tensor.shape
+        tensor = torch.reshape(tensor, (orig_shape[0], orig_shape[1]*orig_shape[2], orig_shape[3], orig_shape[4]))
     shp = tensor.shape
     #print ("shape1:", shp[1], " opt_exp_list:", len(opt_exp_list))
     chnl_group = (int)(shp[1]/len(opt_exp_list))
     number_of_blocks = math.ceil(shp[1]/chnl_group)
     opt_exp_list = torch.Tensor(opt_exp_list).cuda()
+    #print ("shap[1]:", shp)
+    #print ("len exp list", len(opt_exp_list))
     if shp[1] % chnl_group == 0:
         # shp[1] is divisible by block size
         # Therefore just one tensor will be created
+        #print (tensor.shape)
         tensor = torch.reshape(tensor, (shp[0], number_of_blocks, chnl_group*shp[2]*shp[3]))
         opt_exp_list = opt_exp_list.unsqueeze(0) ##### Need Unit test
         tensor = to_exponent_mantissa_width(tensor, opt_exp_list, mantissa, quant_dim=len(tensor.shape)-1)
         tensor = torch.reshape(tensor, (shp[0], shp[1], shp[2], shp[3]))
+        if is_3d is True:
+            tensor = torch.reshape(tensor, (orig_shape[0], orig_shape[1], orig_shape[2], orig_shape[3], orig_shape[4]))
         return tensor
 
     else:

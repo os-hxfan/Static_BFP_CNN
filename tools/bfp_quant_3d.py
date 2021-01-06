@@ -27,6 +27,7 @@ import torchvision.datasets as datasets
 import torchvision.models as models
 from tensorboardX import SummaryWriter
 import pretrainedmodels
+from torch.utils.data import DataLoader
 
 writer = SummaryWriter("./tensorboard/statistics")
 
@@ -48,10 +49,10 @@ def bfp_quant(model_name, dataset_dir, num_classes, gpus, mantisa_bit, exp_bit, 
     normalize = transforms.Normalize(mean=mean,
                                      std=std)
 
-
-    train_dataloader = DataLoader(VideoDataset(dataset=dataset, split='train',clip_len=16), batch_size=20, shuffle=True, num_workers=4)
-    val_dataloader   = DataLoader(VideoDataset(dataset=dataset, split='val',  clip_len=16), batch_size=20, num_workers=4)
-    test_dataloader  = DataLoader(VideoDataset(dataset=dataset, split='test', clip_len=16), batch_size=20, num_workers=4)
+    
+    train_dataloader = DataLoader(VideoDataset(dataset='ucf101', split='train',clip_len=16), batch_size=batch_size, shuffle=True, num_workers=4)
+    val_dataloader   = DataLoader(VideoDataset(dataset='ucf101', split='val',  clip_len=16), batch_size=num_examples, num_workers=4)
+    test_dataloader  = DataLoader(VideoDataset(dataset='ucf101', split='test', clip_len=16), batch_size=batch_size, num_workers=4)
 
     # # for collect intermediate data use
     # collect_loader = torch.utils.data.DataLoader(
@@ -76,7 +77,7 @@ def bfp_quant(model_name, dataset_dir, num_classes, gpus, mantisa_bit, exp_bit, 
 
 
     # Loading the model
-    model, _ = model_factory.get_network(model_name, pretrained=True)
+    model, _ = model_factory_3d.get_network(model_name, pretrained=True)
     # Insert the hook to record the intermediate result
     #target_module_list = [nn.BatchNorm2d,nn.Linear] # Insert hook after BN and FC
     model, intern_outputs = Stat_Collector.insert_hook(model, target_module_list)
@@ -89,7 +90,7 @@ def bfp_quant(model_name, dataset_dir, num_classes, gpus, mantisa_bit, exp_bit, 
     logging.info("Collecting the statistics while running image examples....")
     images_statistc = torch.empty((1))
     with torch.no_grad():
-        for i_batch, (images, lables) in enumerate(test_dataloader):
+        for i_batch, (images, lables) in enumerate(val_dataloader):
             images = images.cuda()
             outputs = model(images)
             #print(lables)
@@ -115,8 +116,9 @@ def bfp_quant(model_name, dataset_dir, num_classes, gpus, mantisa_bit, exp_bit, 
         #Deternmining the optimal exponent by minimizing the KL_Divergence in channel-wise manner
         if (isinstance(intern_output.m, nn.Conv3d) or isinstance(intern_output.m, nn.BatchNorm2d)):
             intern_shape = intern_output.out_features.shape
+            print (intern_shape)
             intern_features = torch.reshape(intern_output.out_features,
-                            (image_shape[0], image_shape[1], image_shape[2], image_shape[3]*image_shape[4]))
+                            (intern_shape[0], intern_shape[1], intern_shape[2], intern_shape[3]*intern_shape[4]))
             opt_exp, max_exp = Utils.find_exp_act_3d(intern_features, mantisa_bit, exp_bit, 
                                             group = bfp_act_chnl, eps=eps, bins_factor=act_bins_factor)
             opt_exp_act_list.append(opt_exp) ##changed
@@ -168,7 +170,8 @@ def bfp_quant(model_name, dataset_dir, num_classes, gpus, mantisa_bit, exp_bit, 
             images = images.cuda()
             outputs = bfp_model(images)
             #outputs = model(images)
-            _, predicted = torch.max(outputs.data, 1)
+            probs = nn.Softmax(dim=1)(outputs)
+            _, predicted = torch.max(probs, 1)
             predicted = predicted.cpu()
             total += lables.size(0)
             correct += (predicted == lables).sum().item()
