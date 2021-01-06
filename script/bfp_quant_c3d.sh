@@ -15,6 +15,6 @@ python -m tools.bfp_quant_3d --model_name c3d \
 --bfp_weight_chnl 1 \
 --bfp_quant 1 \
 --num_examples 10 \
---hooks Conv3d,Linear \
+--hooks BatchNorm2d,Linear \
 --act_bins_factor 6
 

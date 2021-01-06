@@ -154,6 +154,21 @@ class BFPConvertor_3D:
         self.mantisa_bit = mantisa_bit
         self.exp_bit = exp_bit
 
+    def collect_bn3d_tensor(self, model):
+        bn_weight = []
+        bn_bias = []
+        bn_mean = []
+        bn_var = []
+        bn_eps = []
+        for mod in model.modules():
+            if isinstance(mod, nn.BatchNorm3d):
+                bn_weight.append(mod.weight.data.cuda())
+                bn_bias.append(mod.bias.data.cuda())
+                bn_mean.append(mod.running_mean.data.cuda())
+                bn_var.append(mod.running_var.data.cuda())
+                bn_eps.append(mod.eps)
+        return bn_weight, bn_bias, bn_mean, bn_var, bn_eps
+
     def collect_fc_tensor(self, model):
         fc_weight = []
         fc_bias = []
@@ -174,6 +189,31 @@ class BFPConvertor_3D:
         return conv_weight, conv_bias             
 
 
+    def fused_bn3d(self, conv_weight, conv_bias, bn_weight, bn_bias, bn_mean, bn_var, bn_eps):
+        if (len(conv_weight) != len(bn_weight)):
+            logging.info("%d conv, %d bn, not equal"%(len(conv_weight), len(bn_weight)))
+        #print ("bias:", conv_bias)
+        if (len(conv_bias) != 0):
+            isbias=True
+        else:
+            isbias=False
+        for i, conv_wtensor in enumerate(conv_weight):
+            logging.debug("Fusing the No.%d conv"%(i))
+            mean = bn_mean[i]
+            var_sqrt = torch.sqrt(bn_var[i] + bn_eps[i])
+            beta = bn_weight[i]
+            gamma = bn_bias[i]
+            if (isbias):
+                b = conv_bias[i]
+            else:
+                b = mean.new_zeros(mean.shape)
+                conv_bias.append(b)
+            #print ("beta shape:", beta.shape, " var_sqrt shape:", var_sqrt.shape, "conv shape", conv_wtensor.shape)
+            conv_weight[i] = conv_wtensor * (beta / var_sqrt).reshape([conv_wtensor.shape[0], 1, 1, 1, 1])
+            b = (b - mean)/var_sqrt * beta + gamma
+            conv_bias[i] = b
+        return conv_weight, conv_bias
+
     def __call__(self, golden_model, block_model, group, conv_isbias=False, is_kl=True):
         #print("Returning pretrained model with bit length", self.nmb_bits, "and block size of", self.bs_size)
         logging.info("Transferring the knowledge of pretrained model to Block-Floating-Point model")
@@ -182,8 +222,11 @@ class BFPConvertor_3D:
         j = 0
         k = 0
         conv_weight, conv_bias = self.collect_conv_tensor(golden_model, conv_isbias)
+        bn_weight, bn_bias, bn_mean, bn_var, bn_eps = self.collect_bn3d_tensor(golden_model)
         fc_weight, fc_bias = self.collect_fc_tensor(golden_model)
         weight_exp_list = []
+        if (len(bn_weight) != 0):
+            conv_weight, conv_bias = self.fused_bn3d(conv_weight, conv_bias, bn_weight, bn_bias, bn_mean, bn_var, bn_eps)
         for gmod, bmod in zip(golden_model.modules(), block_model.modules()):
             # Conv layer
             if isinstance(bmod, nn.Conv3d):
