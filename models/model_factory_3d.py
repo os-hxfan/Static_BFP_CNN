@@ -1,4 +1,5 @@
 from models import c3d
+from models import r3d
 from lib.BFPConvertor import BFPConvertor_3D
 
 models_map = {  "c3d" : c3d.c3d,

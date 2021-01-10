@@ -115,7 +115,7 @@ def bfp_quant(model_name, dataset_dir, num_classes, gpus, mantisa_bit, exp_bit, 
     max_exp_act_list.append(max_exp)
     for i, intern_output in enumerate(intern_outputs):
         #Deternmining the optimal exponent by minimizing the KL_Divergence in channel-wise manner
-        print ("i-th", i, "  length:", len(opt_exp), " name:", intern_output.m)
+        print ("i-th", i, "  shape:", intern_output.out_features.shape, " name:", intern_output.m)
         if (isinstance(intern_output.m, nn.Conv3d) or isinstance(intern_output.m, nn.BatchNorm3d)):
             intern_shape = intern_output.out_features.shape
             print (intern_shape)

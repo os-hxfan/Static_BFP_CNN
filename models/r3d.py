@@ -5,6 +5,7 @@ from torch.nn.modules.utils import _triple
 from lib import BFPActivation
 from lib import BFPFullyConnet
 
+layer_sizes = (2, 2, 2, 2)
 ######### Orig Model Define #############
 class SpatioTemporalConv(nn.Module):
     r"""Applies a factored 3D convolution over an input signal composed of several input
@@ -144,6 +145,8 @@ class R3DNet(nn.Module):
 
         # first conv, with stride 1x2x2 and kernel size 3x7x7
         self.conv1 = SpatioTemporalConv(3, 64, [3, 7, 7], stride=[1, 2, 2], padding=[1, 3, 3])
+        self.bn1 = nn.BatchNorm3d(64)
+        self.relu1 = nn.ReLU()
         # output of conv2 is same size as of conv1, no downsampling needed. kernel_size 3x3x3
         self.conv2 = SpatioTemporalResLayer(64, 64, 3, layer_sizes[0], block_type=block_type)
         # each of the final three layers doubles num_channels, while performing downsampling
@@ -156,7 +159,7 @@ class R3DNet(nn.Module):
         self.pool = nn.AdaptiveAvgPool3d(1)
 
     def forward(self, x):
-        x = self.conv1(x)
+        x = self.relu1(self.bn1(self.conv1(x)))
         x = self.conv2(x)
         x = self.conv3(x)
         x = self.conv4(x)
@@ -179,7 +182,7 @@ class r3d(nn.Module):
             block_type (Module, optional): Type of block that is to be used to form the layers. Default: SpatioTemporalResBlock.
         """
 
-    def __init__(self, num_classes, layer_sizes, block_type=SpatioTemporalResBlock, pretrained=False):
+    def __init__(self, num_classes, block_type=SpatioTemporalResBlock, pretrained=False):
         super(r3d, self).__init__()
 
         self.res3d = R3DNet(layer_sizes, block_type)
@@ -435,7 +438,7 @@ class r3d_bfp(nn.Module):
             block_type (Module, optional): Type of block that is to be used to form the layers. Default: SpatioTemporalResBlock.
         """
 
-    def __init__(self, num_classes, layer_sizes, block_type=BFP_SpatioTemporalResBlock, pretrained=False,
+    def __init__(self, num_classes, block_type=BFP_SpatioTemporalResBlock, pretrained=False,
             exp_bit=4, mantisa_bit=8, opt_exp_act_list=None):
         super(r3d_bfp, self).__init__()
 
