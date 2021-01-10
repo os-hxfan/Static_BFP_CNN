@@ -200,10 +200,10 @@ class r3d(nn.Module):
         return logits
 
     def __load_pretrained_weights(self):
-        s_dict = self.state_dict()
-        for name in s_dict:
-            print(name)
-            print(s_dict[name].size())
+        p_dict = torch.load("/mnt/ccnas2/bdp/hf17/TCAD_3DCNNs/R3D-ucf101_epoch-99.pth.tar")
+        print ("Loading from pretrained models")
+        self.load_state_dict(p_dict['state_dict'])
+        #s_dict = self.state_dict()
 
     def __init_weight(self):
         for m in self.modules():

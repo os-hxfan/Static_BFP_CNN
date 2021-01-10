@@ -113,19 +113,47 @@ def bfp_quant(model_name, dataset_dir, num_classes, gpus, mantisa_bit, exp_bit, 
     opt_exp, max_exp = Utils.find_exp_act_3d(images_statistc, mantisa_bit, exp_bit, group=3, eps=eps, bins_factor=act_bins_factor)
     opt_exp_act_list.append(opt_exp)
     max_exp_act_list.append(max_exp)
+    sc_layer = [2, 4, 9, 14, 19]
+    ds_sc_layer = [6, 7, 11, 12, 16, 17]
     for i, intern_output in enumerate(intern_outputs):
         #Deternmining the optimal exponent by minimizing the KL_Divergence in channel-wise manner
         print ("i-th", i, "  shape:", intern_output.out_features.shape, " name:", intern_output.m)
         if (isinstance(intern_output.m, nn.Conv3d) or isinstance(intern_output.m, nn.BatchNorm3d)):
-            intern_shape = intern_output.out_features.shape
-            print (intern_shape)
-            intern_features = torch.reshape(intern_output.out_features,
-                            (intern_shape[0], intern_shape[1], intern_shape[2], intern_shape[3]*intern_shape[4]))
-            opt_exp, max_exp = Utils.find_exp_act_3d(intern_features, mantisa_bit, exp_bit, 
-                                            group = bfp_act_chnl, eps=eps, bins_factor=act_bins_factor)
-            print ("i-th", i, "  length:", len(opt_exp))
-            opt_exp_act_list.append(opt_exp) ##changed
-            max_exp_act_list.append(max_exp)
+            if ((model_name=="r3d") and (i in sc_layer)):
+                intern_features1 = intern_output.out_features
+                intern_features2 = intern_outputs[i-2].out_features
+                intern_features = torch.cat((intern_features1, intern_features2), 0)
+                intern_features = torch.reshape(intern_features,
+                                (2*intern_shape[0], intern_shape[1], intern_shape[2], intern_shape[3]*intern_shape[4]))
+                opt_exp, max_exp = Utils.find_exp_act_3d(intern_features, mantisa_bit, exp_bit, 
+                                                group = bfp_act_chnl, eps=eps, bins_factor=act_bins_factor)
+                print ("i-th", i, "  length:", len(opt_exp))
+                opt_exp_act_list.append(opt_exp) ##changed
+                max_exp_act_list.append(max_exp)
+            elif ((model_name=="r3d") and (i in ds_sc_layer)):
+                intern_features1 = intern_output.out_features
+                if ((i+1) in ds_sc_layer):
+                    intern_features2 = intern_outputs[i+1].out_features
+                else:
+                    continue # Use the same exp as previous layer
+                intern_features = torch.cat((intern_features1, intern_features2), 0)
+                intern_features = torch.reshape(intern_features,
+                                (2*intern_shape[0], intern_shape[1], intern_shape[2], intern_shape[3]*intern_shape[4]))
+                opt_exp, max_exp = Utils.find_exp_act_3d(intern_features, mantisa_bit, exp_bit, 
+                                                group = bfp_act_chnl, eps=eps, bins_factor=act_bins_factor)
+                print ("i-th", i, "  length:", len(opt_exp))
+                opt_exp_act_list.append(opt_exp) ##changed
+                max_exp_act_list.append(max_exp)
+            else:
+                intern_shape = intern_output.out_features.shape
+                print (intern_shape)
+                intern_features = torch.reshape(intern_output.out_features,
+                                (intern_shape[0], intern_shape[1], intern_shape[2], intern_shape[3]*intern_shape[4]))
+                opt_exp, max_exp = Utils.find_exp_act_3d(intern_features, mantisa_bit, exp_bit, 
+                                                group = bfp_act_chnl, eps=eps, bins_factor=act_bins_factor)
+                print ("i-th", i, "  length:", len(opt_exp))
+                opt_exp_act_list.append(opt_exp) ##changed
+                max_exp_act_list.append(max_exp)
         elif (isinstance(intern_output.m, nn.Linear)):
             intern_shape = intern_output.out_features.shape
             opt_exp, max_exp = Utils.find_exp_fc(intern_output.out_features, mantisa_bit, exp_bit, block_size = intern_shape[1], eps=eps, bins_factor=fc_bins_factor)
