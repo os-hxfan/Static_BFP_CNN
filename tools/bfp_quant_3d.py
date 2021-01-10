@@ -32,6 +32,7 @@ from torch.utils.data import DataLoader
 writer = SummaryWriter("./tensorboard/statistics")
 
 modules_map = {  "Linear" : nn.Linear,
+                 "BatchNorm3d" : nn.BatchNorm3d,
                  "Conv3d" :  nn.Conv3d
 }
 
@@ -114,13 +115,14 @@ def bfp_quant(model_name, dataset_dir, num_classes, gpus, mantisa_bit, exp_bit, 
     max_exp_act_list.append(max_exp)
     for i, intern_output in enumerate(intern_outputs):
         #Deternmining the optimal exponent by minimizing the KL_Divergence in channel-wise manner
-        if (isinstance(intern_output.m, nn.Conv3d) or isinstance(intern_output.m, nn.BatchNorm2d)):
+        if (isinstance(intern_output.m, nn.Conv3d) or isinstance(intern_output.m, nn.BatchNorm3d)):
             intern_shape = intern_output.out_features.shape
             print (intern_shape)
             intern_features = torch.reshape(intern_output.out_features,
                             (intern_shape[0], intern_shape[1], intern_shape[2], intern_shape[3]*intern_shape[4]))
             opt_exp, max_exp = Utils.find_exp_act_3d(intern_features, mantisa_bit, exp_bit, 
                                             group = bfp_act_chnl, eps=eps, bins_factor=act_bins_factor)
+            print ("i-th", i, "  length:", len(opt_exp))
             opt_exp_act_list.append(opt_exp) ##changed
             max_exp_act_list.append(max_exp)
         elif (isinstance(intern_output.m, nn.Linear)):

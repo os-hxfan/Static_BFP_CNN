@@ -224,7 +224,8 @@ class c3d_bfp(nn.Module):
         x = BFPActivation.transform_activation_offline(x, self.exp_bit, self.mantisa_bit,
                                                          self.opt_exp_act_list[0], is_3d=True)
         
-        x = self.bn1(self.conv1(x))
+        #x = self.bn1(self.conv1(x))
+        x = self.conv1(x)
 
         x = BFPActivation.transform_activation_offline(x, self.exp_bit, self.mantisa_bit,
                                                          self.opt_exp_act_list[1], is_3d=True)
@@ -232,7 +233,9 @@ class c3d_bfp(nn.Module):
         x = self.relu(x)
         x = self.pool1(x)
 
-        x = self.bn2(self.conv2(x))
+        #x = self.bn2(self.conv2(x))
+        x = self.conv2(x)
+
 
         x = BFPActivation.transform_activation_offline(x, self.exp_bit, self.mantisa_bit,
                                                          self.opt_exp_act_list[2], is_3d=True)
@@ -240,13 +243,15 @@ class c3d_bfp(nn.Module):
         x = self.relu(x)
         x = self.pool2(x)
 
-        x = self.bn3a(self.conv3a(x))
+        #x = self.bn3a(self.conv3a(x))
+        x = self.conv3a(x)
 
         x = BFPActivation.transform_activation_offline(x, self.exp_bit, self.mantisa_bit,
                                                          self.opt_exp_act_list[3], is_3d=True)
 
         x = self.relu(x)
-        x = self.bn3b(self.conv3b(x))
+        #x = self.bn3b(self.conv3b(x))
+        x = self.conv3b(x)
 
         x = BFPActivation.transform_activation_offline(x, self.exp_bit, self.mantisa_bit,
                                                          self.opt_exp_act_list[4], is_3d=True)
@@ -254,13 +259,15 @@ class c3d_bfp(nn.Module):
         x = self.relu(x)
         x = self.pool3(x)
 
-        x = self.bn4a(self.conv4a(x))
+        #x = self.bn4a(self.conv4a(x))
+        x = self.conv4a(x)
 
         x = BFPActivation.transform_activation_offline(x, self.exp_bit, self.mantisa_bit,
                                                          self.opt_exp_act_list[5], is_3d=True)
 
         x = self.relu(x)
-        x = self.bn4b(self.conv4b(x))
+        #x = self.bn4b(self.conv4b(x))
+        x = self.conv4b(x)
 
         x = BFPActivation.transform_activation_offline(x, self.exp_bit, self.mantisa_bit,
                                                          self.opt_exp_act_list[6], is_3d=True)
@@ -268,13 +275,15 @@ class c3d_bfp(nn.Module):
         x = self.relu(x)
         x = self.pool4(x)
 
-        x = self.bn5a(self.conv5a(x))
+        #x = self.bn5a(self.conv5a(x))
+        x = self.conv5a(x)
 
         x = BFPActivation.transform_activation_offline(x, self.exp_bit, self.mantisa_bit,
                                                          self.opt_exp_act_list[7], is_3d=True)
 
         x = self.relu(x)
-        x = self.bn5b(self.conv5b(x))
+        #x = self.bn5b(self.conv5b(x))
+        x = self.conv5b(x)
 
         x = BFPActivation.transform_activation_offline(x, self.exp_bit, self.mantisa_bit,
                                                          self.opt_exp_act_list[8], is_3d=True)

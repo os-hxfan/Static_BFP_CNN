@@ -203,6 +203,7 @@ class BFPConvertor_3D:
             var_sqrt = torch.sqrt(bn_var[i] + bn_eps[i])
             beta = bn_weight[i]
             gamma = bn_bias[i]
+            print ("conv shape:", conv_wtensor.shape, " beta shape:", beta.shape)
             if (isbias):
                 b = conv_bias[i]
             else:

@@ -11,10 +11,10 @@ python -m tools.bfp_quant_3d --model_name c3d \
 --resize 256 \
 --crop 224 \
 --exp_act kl \
---bfp_act_chnl 1 \
---bfp_weight_chnl 1 \
+--bfp_act_chnl -1 \
+--bfp_weight_chnl -1 \
 --bfp_quant 1 \
 --num_examples 10 \
---hooks BatchNorm2d,Linear \
+--hooks BatchNorm3d,Linear \
 --act_bins_factor 6
 
