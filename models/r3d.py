@@ -5,6 +5,8 @@ from torch.nn.modules.utils import _triple
 from lib import BFPActivation
 from lib import BFPFullyConnet
 
+import torch
+import torch.nn as nn
 layer_sizes = (2, 2, 2, 2)
 ######### Orig Model Define #############
 class SpatioTemporalConv(nn.Module):
@@ -347,7 +349,7 @@ class BFP_SpatioTemporalResLayer(nn.Module):
 
         # implement the first block
         self.block1 = block_type(in_channels, out_channels, kernel_size, downsample,
-            exp_bit=self.exp_bit, mantisa_bit=self.mantisa_bit, opt_exp_act_list=self.opt_exp_act_list[0:1])
+            exp_bit=self.exp_bit, mantisa_bit=self.mantisa_bit, opt_exp_act_list=self.opt_exp_act_list[0:2])
 
         # prepare module list to hold all (layer_size - 1) blocks
         self.blocks = nn.ModuleList([])
@@ -355,7 +357,7 @@ class BFP_SpatioTemporalResLayer(nn.Module):
         for i in range(layer_size - 1):
             # all these blocks are identical, and have downsample = False by default
             self.blocks += [block_type(out_channels, out_channels, kernel_size, exp_bit=self.exp_bit,
-                mantisa_bit=self.mantisa_bit, opt_exp_act_list=self.opt_exp_act_list[cur_indx:cur_indx+1])]
+                mantisa_bit=self.mantisa_bit, opt_exp_act_list=self.opt_exp_act_list[cur_indx:cur_indx+2])]
             cur_indx +=2
 
     def forward(self, x):
@@ -383,28 +385,28 @@ class BFP_R3DNet(nn.Module):
         self.exp_bit = exp_bit
         self.mantisa_bit = mantisa_bit
         self.opt_exp_act_list = opt_exp_act_list
-
+        print ("******The length of exp list:", len(self.opt_exp_act_list))
         # first conv, with stride 1x2x2 and kernel size 3x7x7
         self.conv1 = BFP_SpatioTemporalConv(3, 64, [3, 7, 7], stride=[1, 2, 2], padding=[1, 3, 3])
         cur_indx = 2
         next_indx = cur_indx + layer_sizes[0] * 2
         # output of conv2 is same size as of conv1, no downsampling needed. kernel_size 3x3x3
         self.conv2 = BFP_SpatioTemporalResLayer(64, 64, 3, layer_sizes[0], block_type=block_type,
-                exp_bit=self.exp_bit, mantisa_bit=self.mantisa_bit, opt_exp_act_list=self.opt_exp_act_list[cur_indx:next_indx-1])
+                exp_bit=self.exp_bit, mantisa_bit=self.mantisa_bit, opt_exp_act_list=self.opt_exp_act_list[cur_indx:next_indx])
         cur_indx = next_indx
         next_indx += layer_sizes[1] * 2 
         # each of the final three layers doubles num_channels, while performing downsampling
         # inside the first block
         self.conv3 = BFP_SpatioTemporalResLayer(64, 128, 3, layer_sizes[1], block_type=block_type, downsample=True,
-                exp_bit=self.exp_bit, mantisa_bit=self.mantisa_bit, opt_exp_act_list=self.opt_exp_act_list[cur_indx:next_indx-1])
+                exp_bit=self.exp_bit, mantisa_bit=self.mantisa_bit, opt_exp_act_list=self.opt_exp_act_list[cur_indx:next_indx])
         cur_indx = next_indx
         next_indx += layer_sizes[2] * 2 
         self.conv4 = BFP_SpatioTemporalResLayer(128, 256, 3, layer_sizes[2], block_type=block_type, downsample=True,
-                exp_bit=self.exp_bit, mantisa_bit=self.mantisa_bit, opt_exp_act_list=self.opt_exp_act_list[cur_indx:next_indx-1])
+                exp_bit=self.exp_bit, mantisa_bit=self.mantisa_bit, opt_exp_act_list=self.opt_exp_act_list[cur_indx:next_indx])
         cur_indx = next_indx
         next_indx += layer_sizes[3] * 2 
         self.conv5 = BFP_SpatioTemporalResLayer(256, 512, 3, layer_sizes[3], block_type=block_type, downsample=True,
-                exp_bit=self.exp_bit, mantisa_bit=self.mantisa_bit, opt_exp_act_list=self.opt_exp_act_list[cur_indx:next_indx-1])
+                exp_bit=self.exp_bit, mantisa_bit=self.mantisa_bit, opt_exp_act_list=self.opt_exp_act_list[cur_indx:next_indx])
 
         # global average pooling of the output
         self.pool = nn.AdaptiveAvgPool3d(1)
@@ -446,7 +448,7 @@ class r3d_bfp(nn.Module):
         self.mantisa_bit = mantisa_bit
         self.opt_exp_act_list = opt_exp_act_list
 
-        self.res3d = R3DNet_BFP(layer_sizes, block_type, exp_bit=self.exp_bit, mantisa_bit=self.mantisa_bit, opt_exp_act_list=self.opt_exp_act_list)
+        self.res3d = BFP_R3DNet(layer_sizes, block_type, exp_bit=self.exp_bit, mantisa_bit=self.mantisa_bit, opt_exp_act_list=self.opt_exp_act_list)
         self.linear = nn.Linear(512, num_classes)
 
         self.__init_weight()

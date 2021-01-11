@@ -15,7 +15,8 @@ def get_network(model_name, pretrained=True, bfp=False, group=1, mantisa_bit=8, 
         golden_model = models_map[model_name](101, pretrained=True)
         c3d_converter = BFPConvertor_3D(mantisa_bit, exp_bit)
         bfp_model = models_map[bfp_model_name](num_classes=101, pretrained=True, exp_bit=exp_bit, mantisa_bit=mantisa_bit, opt_exp_act_list=opt_exp_act_list)
-        bfp_model, weight_exp_list = c3d_converter(golden_model, bfp_model, group, conv_isbias=True, is_kl=True)
+        conv_isbias = True if model_name=="c3d" else False
+        bfp_model, weight_exp_list = c3d_converter(golden_model, bfp_model, group, conv_isbias=conv_isbias, is_kl=True)
         return bfp_model, weight_exp_list
     else:
         return models_map[model_name](num_classes=101, pretrained=True), None
