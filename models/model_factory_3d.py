@@ -1,10 +1,11 @@
 from models import c3d
 from models import r3d
+from models import res3dnet
 from lib.BFPConvertor import BFPConvertor_3D
 
 models_map = {  "c3d" : c3d.c3d,
                 "c3d_bfp" : c3d.c3d_bfp,
-                "r3d" : r3d.r3d,
+                "r3d" : res3dnet.r3d,
                 "r3d_bfp" : r3d.r3d_bfp
 }
 

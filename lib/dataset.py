@@ -19,9 +19,14 @@ class VideoDataset(Dataset):
             preprocess (bool): Determines whether to preprocess dataset. Default is False.
     """
 
-    def __init__(self, dataset='ucf101', split='train', clip_len=16, preprocess=False):
-        self.root_dir = '/mnt/ccnas2/bdp/hf17/Datasets/UCF101/video_data/UCF-101/'
-        self.output_dir = '/mnt/ccnas2/bdp/hf17/Datasets/UCF101/video_data/preprocess/'
+    def __init__(self, dataset='ucf101', split='train', clip_len=16, preprocess=False, model_name="c3d"):
+        self.model_name = model_name
+        if (self.model_name == "c3d"):
+            self.root_dir = '/mnt/ccnas2/bdp/hf17/Datasets/UCF101/video_data/UCF-101/'
+            self.output_dir = '/mnt/ccnas2/bdp/hf17/Datasets/UCF101/video_data/preprocess/'          
+        else:
+            self.root_dir = '/mnt/ccnas2/bdp/hf17/Datasets/UCF101/video_data/UCF-101/'
+            self.output_dir = '/mnt/ccnas2/bdp/hf17/Datasets/UCF101/video_data/split1/'
         folder = os.path.join(self.output_dir, split)
         self.clip_len = clip_len
         self.split = split
@@ -124,8 +129,20 @@ class VideoDataset(Dataset):
             file_path = os.path.join(self.root_dir, file)
             video_files = [name for name in os.listdir(file_path)]
 
-            train_and_valid, test = train_test_split(video_files, test_size=0.2, random_state=42)
-            train, val = train_test_split(train_and_valid, test_size=0.2, random_state=42)
+            if (self.model_name == "c3d"):
+            # Split dataset using sklearn
+                train_and_valid, test = train_test_split(video_files, test_size=0.2, random_state=42)
+                train, val = train_test_split(train_and_valid, test_size=0.2, random_state=42)
+            else:
+                train, val, eval = [], [], []
+
+                for line in open('/mnt/ccnas2/bdp/hf17/Datasets/UCF101/ucfTrainTestlist/trainlist01.txt', 'r'):
+                    train.append(line.split(' ')[0])
+
+                for line in open('/mnt/ccnas2/bdp/hf17/Datasets/UCF101/ucfTrainTestlist/testlist01.txt', 'r'):
+                    test.append(line.replace('\n', ''))
+
+                val = random.sample(test, int(len(test) * 0.2))
 
             train_dir = os.path.join(self.output_dir, 'train', file)
             val_dir = os.path.join(self.output_dir, 'val', file)
