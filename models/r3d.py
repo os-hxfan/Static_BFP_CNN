@@ -516,9 +516,15 @@ def get_10x_lr_params(model):
                 yield k
 
 if __name__ == "__main__":
-    import torch
     inputs = torch.rand(1, 3, 16, 112, 112)
     net = r3d(101, (2, 2, 2, 2), pretrained=True)
+    net.to("cpu")
+    net.eval()
+    test_iter = 250
+    start = time.time()
+    for i in range(test_iter):
+        outputs = net.forward(inputs)
+    end = time.time()
+    avg_time = ((end-start) * 1000) / test_iter
+    print(avg_time, " ms")
 
-    outputs = net.forward(inputs)
-    print(outputs.size())
