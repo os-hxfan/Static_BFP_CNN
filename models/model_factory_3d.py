@@ -13,7 +13,7 @@ models_map = {  "c3d" : c3d.c3d,
                 "br_r3d_bfp" : br_r3d.r3d_bfp
 }
 
-def get_network(model_name, pretrained=True, bfp=False, group=1, mantisa_bit=8, exp_bit=8, opt_exp_act_list=None, is_online=False):
+def get_network(model_name, pretrained=True, bfp=False, group=1, mantisa_bit=8, exp_bit=8, opt_exp_act_list=None, is_online=False, exp_act='kl'):
     if (bfp):
         bfp_model_name = model_name + "_bfp"
         if is_online:
@@ -23,7 +23,7 @@ def get_network(model_name, pretrained=True, bfp=False, group=1, mantisa_bit=8, 
         c3d_converter = BFPConvertor_3D(mantisa_bit, exp_bit)
         bfp_model = models_map[bfp_model_name](num_classes=101, pretrained=True, exp_bit=exp_bit, mantisa_bit=mantisa_bit, opt_exp_act_list=opt_exp_act_list)
         conv_isbias = True if ("c3d" in model_name) else False
-        bfp_model, weight_exp_list = c3d_converter(golden_model, bfp_model, group, conv_isbias=conv_isbias, is_kl=True)
+        bfp_model, weight_exp_list = c3d_converter(golden_model, bfp_model, group, conv_isbias=conv_isbias, is_kl=True, exp_act=exp_act)
         return bfp_model, weight_exp_list
     else:
         return models_map[model_name](num_classes=101, pretrained=True), None

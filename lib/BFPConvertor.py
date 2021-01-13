@@ -218,7 +218,7 @@ class BFPConvertor_3D:
             conv_bias[i] = b
         return conv_weight, conv_bias
 
-    def __call__(self, golden_model, block_model, group, conv_isbias=False, is_kl=True):
+    def __call__(self, golden_model, block_model, group, conv_isbias=False, is_kl=True, exp_act='kl'):
         #print("Returning pretrained model with bit length", self.nmb_bits, "and block size of", self.bs_size)
         logging.info("Transferring the knowledge of pretrained model to Block-Floating-Point model")
         golden_model.eval()
@@ -243,7 +243,7 @@ class BFPConvertor_3D:
                     opt_exp_list = None
                     bmod.bias.data = conv_bias[k]                   
                     '''
-                    bmod.weight.data, opt_exp_list = find_exp_weight_3d(conv_weight[k], self.mantisa_bit, self.exp_bit, group, eps=0.000000001, num_bins=32)
+                    bmod.weight.data, opt_exp_list = find_exp_weight_3d(conv_weight[k], self.mantisa_bit, self.exp_bit, group, eps=0.000000001, num_bins=32, exp_act=exp_act)
                     weight_exp_list.append(opt_exp_list)
                     if (conv_isbias or (len(bn_weight) != 0)):
                         bmod.bias.data = bfp_quant_bias_KL(conv_bias[k], 16) # set mantissa as 2*(10-2)=16, assume in hardware we can 16-bit fraction      

@@ -193,7 +193,7 @@ def bfp_quant(model_name, dataset_dir, num_classes, gpus, mantisa_bit, exp_bit, 
     else:
        exp_act_list = None 
     bfp_model, weight_exp_list = model_factory_3d.get_network(model_name, pretrained=True, bfp=(bfp_quant==1), group=bfp_weight_chnl, mantisa_bit=mantisa_bit, 
-                exp_bit=exp_bit, opt_exp_act_list=exp_act_list, is_online=is_online)
+                exp_bit=exp_bit, opt_exp_act_list=exp_act_list, is_online=is_online, exp_act=exp_act)
 
     #torch.cuda.empty_cache() 
     logging.info("Evaluation Block Floating Point quantization....")

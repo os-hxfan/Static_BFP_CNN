@@ -303,7 +303,7 @@ def find_bin_percent_hist(float_hist, num_bins, percentage=0.965):
             break
     return margin_min_bin, margin_max_bin
 
-def find_exp_KL_weight(array, MANTISSA_WIDTH, EXPONENT_WIDTH, group=1, eps=0.0001, bins_factor=3, num_bins=64):
+def find_exp_KL_weight(array, MANTISSA_WIDTH, EXPONENT_WIDTH, group=1, eps=0.0001, bins_factor=3, num_bins=64, exp_act='kl'):
     # Find the proper exponent value instead of max_exp by minimize the KL_divergence
     #   num_bins is used to construct the histogram/distribution
     #   eps is used to smooth the histogram/distribution
@@ -437,7 +437,10 @@ def find_exp_KL_weight(array, MANTISSA_WIDTH, EXPONENT_WIDTH, group=1, eps=0.000
     if (orig_shape[1] == 1):
         return max_quant_array 
     '''
-    return opt_quant_array, opt_exp
+    if exp_act=='kl':
+        return opt_quant_array, opt_exp
+    else:
+        return max_quant_array, max_exp
 
 def find_exp_weight(array, MANTISSA_WIDTH, EXPONENT_WIDTH, group = 1, eps=0.0001, num_bins=64):
     # Find the proper exponent value instead of max_exp by minimize the KL_divergence
@@ -465,7 +468,7 @@ def find_exp_weight(array, MANTISSA_WIDTH, EXPONENT_WIDTH, group = 1, eps=0.0001
         opt_exp = np.concatenate((opt_exp1, opt_exp2), axis=1)
     return quant_array, opt_exp
 
-def find_exp_weight_3d(array, MANTISSA_WIDTH, EXPONENT_WIDTH, group = 1, eps=0.0001, num_bins=64):
+def find_exp_weight_3d(array, MANTISSA_WIDTH, EXPONENT_WIDTH, group = 1, eps=0.0001, num_bins=64, exp_act='kl'):
     # Find the proper exponent value instead of max_exp by minimize the KL_divergence
     #   num_bins is used to construct the histogram/distribution
     #   eps is used to smooth the histogram/distribution
@@ -477,7 +480,7 @@ def find_exp_weight_3d(array, MANTISSA_WIDTH, EXPONENT_WIDTH, group = 1, eps=0.0
     number_of_blocks = math.ceil(orig_shape[1]/group)
     if orig_shape[1] % group == 0:
         quant_array, opt_exp = find_exp_KL_weight(array, MANTISSA_WIDTH, EXPONENT_WIDTH, group=group, eps=eps,
-                            num_bins=num_bins)
+                            num_bins=num_bins, exp_act=exp_act)
     else:
         NotImplemented
     quant_array = torch.reshape(quant_array, (orig_shape[0], orig_shape[1], orig_shape[2], orig_shape[3], orig_shape[4]))
