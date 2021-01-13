@@ -235,7 +235,7 @@ class BFP_SpatioTemporalConv(nn.Module):
         bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``
     """
 
-    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, bias=False):
+    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, bias=True): # bias needs to be True for BFP module
         super(BFP_SpatioTemporalConv, self).__init__()
 
         # if ints are entered, convert them to iterables, 1 -> [1, 1, 1]
@@ -311,24 +311,24 @@ class BFP_SpatioTemporalResBlock(nn.Module):
 
     def forward(self, x):
         res = self.conv1(x)
-        '''
+        
         res = BFPActivation.transform_activation_offline(res, self.exp_bit, self.mantisa_bit,
                                                          self.opt_exp_act_list[0], is_3d=True)
-        '''
+        
         res = self.relu1(res)
         res = self.conv2(res)
-        '''
+        
         res = BFPActivation.transform_activation_offline(res, self.exp_bit, self.mantisa_bit,
                                                          self.opt_exp_act_list[1], is_3d=True)
-        '''
+        
 
         if self.downsample:
             x = self.downsampleconv(x)
             #x = self.downsamplebn(self.downsampleconv(x))
-        ''' 
+        
         x = BFPActivation.transform_activation_offline(x, self.exp_bit, self.mantisa_bit,
                                                         self.opt_exp_act_list[1], is_3d=True)
-        '''
+        
 
         return self.outrelu(x + res)
 
@@ -396,6 +396,7 @@ class BFP_R3DNet(nn.Module):
         print ("******The length of exp list:", len(self.opt_exp_act_list))
         # first conv, with stride 1x2x2 and kernel size 3x7x7
         self.conv1 = BFP_SpatioTemporalConv(3, 64, [3, 7, 7], stride=[1, 2, 2], padding=[1, 3, 3])
+        self.relu1 = nn.ReLU()
         cur_indx = 2
         next_indx = cur_indx + layer_sizes[0] * 2
         # output of conv2 is same size as of conv1, no downsampling needed. kernel_size 3x3x3
@@ -420,15 +421,15 @@ class BFP_R3DNet(nn.Module):
         self.pool = nn.AdaptiveAvgPool3d(1)
 
     def forward(self, x):
-        '''
+        
         x = BFPActivation.transform_activation_offline(x, self.exp_bit, self.mantisa_bit,
                                                          self.opt_exp_act_list[0], is_3d=True)
-        '''
-        x = self.conv1(x)
-        '''
+        
+        x = self.relu1(self.conv1(x))
+        
         x = BFPActivation.transform_activation_offline(x, self.exp_bit, self.mantisa_bit,
                                                          self.opt_exp_act_list[1], is_3d=True)
-        '''
+        
         x = self.conv2(x)
         x = self.conv3(x)
         x = self.conv4(x)
@@ -472,9 +473,9 @@ class r3d_bfp(nn.Module):
     def forward(self, x):
         x = self.res3d(x)
         logits = self.linear(x)
-        '''
+        
         logits = BFPFullyConnet.transform_fc_offline(logits, self.exp_bit, self.mantisa_bit, self.opt_exp_act_list[-1])
-        '''
+        
         return logits
 
     def __load_pretrained_weights(self):
