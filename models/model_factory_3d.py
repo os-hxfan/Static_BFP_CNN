@@ -13,9 +13,11 @@ models_map = {  "c3d" : c3d.c3d,
                 "br_r3d_bfp" : br_r3d.r3d_bfp
 }
 
-def get_network(model_name, pretrained=True, bfp=False, group=1, mantisa_bit=8, exp_bit=8, opt_exp_act_list=None):
+def get_network(model_name, pretrained=True, bfp=False, group=1, mantisa_bit=8, exp_bit=8, opt_exp_act_list=None, is_online=False):
     if (bfp):
         bfp_model_name = model_name + "_bfp"
+        if is_online:
+            bfp_model_name = "br_" + bfp_model_name
         assert opt_exp_act_list != None, "When construct the bfp model, the opt_exp_act should be Non-empty"
         golden_model = models_map[model_name](101, pretrained=True)
         c3d_converter = BFPConvertor_3D(mantisa_bit, exp_bit)

@@ -28,7 +28,11 @@ import torchvision.models as models
 from tensorboardX import SummaryWriter
 import pretrainedmodels
 from torch.utils.data import DataLoader
+import random
 
+random.seed(666)
+torch.manual_seed(666)
+np.random.seed(666)
 writer = SummaryWriter("./tensorboard/statistics")
 
 modules_map = {  "Linear" : nn.Linear,
@@ -184,12 +188,12 @@ def bfp_quant(model_name, dataset_dir, num_classes, gpus, mantisa_bit, exp_bit, 
             exp_act_list = opt_exp_act_list
         else:
             exp_act_list = max_exp_act_list
-        if (is_online == 1):
-            model_name = "br_" + model_name
+        #if (is_online == 1):
+        #    model_name = "br_" + model_name
     else:
        exp_act_list = None 
     bfp_model, weight_exp_list = model_factory_3d.get_network(model_name, pretrained=True, bfp=(bfp_quant==1), group=bfp_weight_chnl, mantisa_bit=mantisa_bit, 
-                exp_bit=exp_bit, opt_exp_act_list=exp_act_list)
+                exp_bit=exp_bit, opt_exp_act_list=exp_act_list, is_online=is_online)
 
     #torch.cuda.empty_cache() 
     logging.info("Evaluation Block Floating Point quantization....")
