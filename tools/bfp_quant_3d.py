@@ -51,9 +51,10 @@ def bfp_quant(model_name, dataset_dir, num_classes, gpus, mantisa_bit, exp_bit, 
                                      std=std)
 
     
-    train_dataloader = DataLoader(VideoDataset(dataset='ucf101', split='train',clip_len=16), batch_size=batch_size, shuffle=True, num_workers=4)
-    val_dataloader   = DataLoader(VideoDataset(dataset='ucf101', split='val',  clip_len=16), batch_size=num_examples, num_workers=4)
-    test_dataloader  = DataLoader(VideoDataset(dataset='ucf101', split='test', clip_len=16), batch_size=batch_size, num_workers=4)
+    train_dataloader = DataLoader(VideoDataset(dataset='ucf101', split='train',clip_len=16, model_name=model_name), batch_size=batch_size, shuffle=True, 
+                            num_workers=4)
+    val_dataloader   = DataLoader(VideoDataset(dataset='ucf101', split='val',  clip_len=16, model_name=model_name), batch_size=num_examples, num_workers=4)
+    test_dataloader  = DataLoader(VideoDataset(dataset='ucf101', split='test', clip_len=16, model_name=model_name), batch_size=batch_size, num_workers=4)
 
     # # for collect intermediate data use
     # collect_loader = torch.utils.data.DataLoader(
@@ -76,115 +77,117 @@ def bfp_quant(model_name, dataset_dir, num_classes, gpus, mantisa_bit, exp_bit, 
     #     batch_size=batch_size, shuffle=False,
     #     num_workers=num_workers, pin_memory=True)
 
+    if (bfp_quant == 1):
+        # Loading the model
+        model, _ = model_factory_3d.get_network(model_name, pretrained=True)
+        # Insert the hook to record the intermediate result
+        #target_module_list = [nn.BatchNorm2d,nn.Linear] # Insert hook after BN and FC
+        model, intern_outputs = Stat_Collector.insert_hook(model, target_module_list)
+        #model = nn.DataParallel(model)
+        model.cuda()
+        model.eval()
+        
 
-    # Loading the model
-    model, _ = model_factory_3d.get_network(model_name, pretrained=True)
-    # Insert the hook to record the intermediate result
-    #target_module_list = [nn.BatchNorm2d,nn.Linear] # Insert hook after BN and FC
-    model, intern_outputs = Stat_Collector.insert_hook(model, target_module_list)
-    #model = nn.DataParallel(model)
-    model.cuda()
-    model.eval()
-    
-
-    # Collect the intermediate result while running number of examples
-    logging.info("Collecting the statistics while running image examples....")
-    images_statistc = torch.empty((1))
-    with torch.no_grad():
-        for i_batch, (images, lables) in enumerate(val_dataloader):
-            images = images.cuda()
-            outputs = model(images)
-            #print(lables)
-            _, predicted = torch.max(outputs.data, 1)
-            predicted = predicted.cpu() # needs to verify if this line can be deleted  
-            # Collect the input data
-            image_shape = images.shape
-            images_statistc = torch.reshape(images, 
-                                    (image_shape[0], image_shape[1], image_shape[2], image_shape[3]*image_shape[4]))
-            break
-    
-    # Deternmining the optimal exponent of activation and
-    # Constructing the distribution for tensorboardX visualization
-    logging.info("Determining the optimal exponent by minimizing the KL divergence....")
-    start = time.time()
-    opt_exp_act_list = []
-    max_exp_act_list = []
-    # For original input
-    opt_exp, max_exp = Utils.find_exp_act_3d(images_statistc, mantisa_bit, exp_bit, group=3, eps=eps, bins_factor=act_bins_factor)
-    opt_exp_act_list.append(opt_exp)
-    max_exp_act_list.append(max_exp)
-    sc_layer = [2, 4, 9, 14, 19]
-    ds_sc_layer = [6, 7, 11, 12, 16, 17]
-    for i, intern_output in enumerate(intern_outputs):
-        #Deternmining the optimal exponent by minimizing the KL_Divergence in channel-wise manner
-        print ("i-th", i, "  shape:", intern_output.out_features.shape, " name:", intern_output.m)
-        if (isinstance(intern_output.m, nn.Conv3d) or isinstance(intern_output.m, nn.BatchNorm3d)):
-            if ((model_name=="r3d") and (i in sc_layer)):
-                intern_features1 = intern_output.out_features
-                intern_features2 = intern_outputs[i-2].out_features
-                intern_features = torch.cat((intern_features1, intern_features2), 0)
-                intern_features = torch.reshape(intern_features,
-                                (2*intern_shape[0], intern_shape[1], intern_shape[2], intern_shape[3]*intern_shape[4]))
-                opt_exp, max_exp = Utils.find_exp_act_3d(intern_features, mantisa_bit, exp_bit, 
-                                                group = bfp_act_chnl, eps=eps, bins_factor=act_bins_factor)
-                print ("i-th", i, "  length:", len(opt_exp))
-                opt_exp_act_list.append(opt_exp) ##changed
-                max_exp_act_list.append(max_exp)
-            elif ((model_name=="r3d") and (i in ds_sc_layer)):
-                intern_features1 = intern_output.out_features
-                if ((i+1) in ds_sc_layer):
-                    intern_features2 = intern_outputs[i+1].out_features
+        # Collect the intermediate result while running number of examples
+        logging.info("Collecting the statistics while running image examples....")
+        images_statistc = torch.empty((1))
+        with torch.no_grad():
+            for i_batch, (images, lables) in enumerate(val_dataloader):
+                images = images.cuda()
+                outputs = model(images)
+                #print(lables)
+                _, predicted = torch.max(outputs.data, 1)
+                predicted = predicted.cpu() # needs to verify if this line can be deleted  
+                # Collect the input data
+                image_shape = images.shape
+                images_statistc = torch.reshape(images, 
+                                        (image_shape[0], image_shape[1], image_shape[2], image_shape[3]*image_shape[4]))
+                break
+        
+        # Deternmining the optimal exponent of activation and
+        # Constructing the distribution for tensorboardX visualization
+        logging.info("Determining the optimal exponent by minimizing the KL divergence....")
+        start = time.time()
+        opt_exp_act_list = []
+        max_exp_act_list = []
+        # For original input
+        opt_exp, max_exp = Utils.find_exp_act_3d(images_statistc, mantisa_bit, exp_bit, group=3, eps=eps, bins_factor=act_bins_factor)
+        opt_exp_act_list.append(opt_exp)
+        max_exp_act_list.append(max_exp)
+        sc_layer = [2, 4, 9, 14, 19]
+        ds_sc_layer = [6, 7, 11, 12, 16, 17]
+        for i, intern_output in enumerate(intern_outputs):
+            #Deternmining the optimal exponent by minimizing the KL_Divergence in channel-wise manner
+            print ("i-th", i, "  shape:", intern_output.out_features.shape, " name:", intern_output.m)
+            if (isinstance(intern_output.m, nn.Conv3d) or isinstance(intern_output.m, nn.BatchNorm3d)):
+                if ((model_name=="r3d") and (i in sc_layer)):
+                    intern_features1 = intern_output.out_features
+                    intern_features2 = intern_outputs[i-2].out_features
+                    intern_features = torch.cat((intern_features1, intern_features2), 0)
+                    intern_features = torch.reshape(intern_features,
+                                    (2*intern_shape[0], intern_shape[1], intern_shape[2], intern_shape[3]*intern_shape[4]))
+                    opt_exp, max_exp = Utils.find_exp_act_3d(intern_features, mantisa_bit, exp_bit, 
+                                                    group = bfp_act_chnl, eps=eps, bins_factor=act_bins_factor)
+                    print ("i-th", i, "  length:", len(opt_exp))
+                    opt_exp_act_list.append(opt_exp) ##changed
+                    max_exp_act_list.append(max_exp)
+                elif ((model_name=="r3d") and (i in ds_sc_layer)):
+                    intern_features1 = intern_output.out_features
+                    if ((i+1) in ds_sc_layer):
+                        intern_features2 = intern_outputs[i+1].out_features
+                    else:
+                        continue # Use the same exp as previous layer
+                    intern_features = torch.cat((intern_features1, intern_features2), 0)
+                    intern_features = torch.reshape(intern_features,
+                                    (2*intern_shape[0], intern_shape[1], intern_shape[2], intern_shape[3]*intern_shape[4]))
+                    opt_exp, max_exp = Utils.find_exp_act_3d(intern_features, mantisa_bit, exp_bit, 
+                                                    group = bfp_act_chnl, eps=eps, bins_factor=act_bins_factor)
+                    print ("i-th", i, "  length:", len(opt_exp))
+                    opt_exp_act_list.append(opt_exp) ##changed
+                    max_exp_act_list.append(max_exp)
                 else:
-                    continue # Use the same exp as previous layer
-                intern_features = torch.cat((intern_features1, intern_features2), 0)
-                intern_features = torch.reshape(intern_features,
-                                (2*intern_shape[0], intern_shape[1], intern_shape[2], intern_shape[3]*intern_shape[4]))
-                opt_exp, max_exp = Utils.find_exp_act_3d(intern_features, mantisa_bit, exp_bit, 
-                                                group = bfp_act_chnl, eps=eps, bins_factor=act_bins_factor)
-                print ("i-th", i, "  length:", len(opt_exp))
-                opt_exp_act_list.append(opt_exp) ##changed
+                    intern_shape = intern_output.out_features.shape
+                    print (intern_shape)
+                    intern_features = torch.reshape(intern_output.out_features,
+                                    (intern_shape[0], intern_shape[1], intern_shape[2], intern_shape[3]*intern_shape[4]))
+                    opt_exp, max_exp = Utils.find_exp_act_3d(intern_features, mantisa_bit, exp_bit, 
+                                                    group = bfp_act_chnl, eps=eps, bins_factor=act_bins_factor)
+                    print ("i-th", i, "  length:", len(opt_exp))
+                    opt_exp_act_list.append(opt_exp) ##changed
+                    max_exp_act_list.append(max_exp)
+            elif (isinstance(intern_output.m, nn.Linear)):
+                intern_shape = intern_output.out_features.shape
+                opt_exp, max_exp = Utils.find_exp_fc(intern_output.out_features, mantisa_bit, exp_bit, block_size = intern_shape[1], eps=eps, bins_factor=fc_bins_factor)
+                #print ("shape of fc exponent:", np.shape(opt_exp))
+                opt_exp_act_list.append(max_exp)
                 max_exp_act_list.append(max_exp)
             else:
-                intern_shape = intern_output.out_features.shape
-                print (intern_shape)
-                intern_features = torch.reshape(intern_output.out_features,
-                                (intern_shape[0], intern_shape[1], intern_shape[2], intern_shape[3]*intern_shape[4]))
-                opt_exp, max_exp = Utils.find_exp_act_3d(intern_features, mantisa_bit, exp_bit, 
-                                                group = bfp_act_chnl, eps=eps, bins_factor=act_bins_factor)
-                print ("i-th", i, "  length:", len(opt_exp))
-                opt_exp_act_list.append(opt_exp) ##changed
+                pass
+                '''
+                intern_shape = intern_output.in_features[0].shape
+                intern_features = torch.reshape(intern_output.in_features[0], 
+                                    (intern_shape[0], intern_shape[1], intern_shape[2]*intern_shape[3]))
+                opt_exp, max_exp = Utils.find_exp_act(intern_features, mantisa_bit, exp_bit, 
+                                                    group = bfp_act_chnl, eps=eps, bins_factor=act_bins_factor)
+                opt_exp_act_list.append(opt_exp)
                 max_exp_act_list.append(max_exp)
-        elif (isinstance(intern_output.m, nn.Linear)):
-            intern_shape = intern_output.out_features.shape
-            opt_exp, max_exp = Utils.find_exp_fc(intern_output.out_features, mantisa_bit, exp_bit, block_size = intern_shape[1], eps=eps, bins_factor=fc_bins_factor)
-            #print ("shape of fc exponent:", np.shape(opt_exp))
-            opt_exp_act_list.append(max_exp)
-            max_exp_act_list.append(max_exp)
-        else:
-            pass
-            '''
-            intern_shape = intern_output.in_features[0].shape
-            intern_features = torch.reshape(intern_output.in_features[0], 
-                                (intern_shape[0], intern_shape[1], intern_shape[2]*intern_shape[3]))
-            opt_exp, max_exp = Utils.find_exp_act(intern_features, mantisa_bit, exp_bit, 
-                                                group = bfp_act_chnl, eps=eps, bins_factor=act_bins_factor)
-            opt_exp_act_list.append(opt_exp)
-            max_exp_act_list.append(max_exp)
-            '''
-            
-        #logging.info("The internal shape: %s" % ((str)(intern_output.out_features.shape)))
-    end = time.time()
-    logging.info("It took %f second to determine the optimal shared exponent for each block." % ((float)(end-start)))
-    logging.info("The shape of collect exponents: %s" % ((str)(np.shape(opt_exp_act_list))))
+                '''
+                
+            #logging.info("The internal shape: %s" % ((str)(intern_output.out_features.shape)))
+        end = time.time()
+        logging.info("It took %f second to determine the optimal shared exponent for each block." % ((float)(end-start)))
+        logging.info("The shape of collect exponents: %s" % ((str)(np.shape(opt_exp_act_list))))
 
-    # Building a BFP model by insert BFPAct and BFPWeiht based on opt_exp_act_list
-    torch.cuda.empty_cache() 
-    if (exp_act=='kl'):
-        exp_act_list = opt_exp_act_list
+        # Building a BFP model by insert BFPAct and BFPWeiht based on opt_exp_act_list
+        torch.cuda.empty_cache() 
+        if (exp_act=='kl'):
+            exp_act_list = opt_exp_act_list
+        else:
+            exp_act_list = max_exp_act_list
+        if (is_online == 1):
+            model_name = "br_" + model_name
     else:
-        exp_act_list = max_exp_act_list
-    if (is_online == 1):
-        model_name = "br_" + model_name
+       exp_act_list = None 
     bfp_model, weight_exp_list = model_factory_3d.get_network(model_name, pretrained=True, bfp=(bfp_quant==1), group=bfp_weight_chnl, mantisa_bit=mantisa_bit, 
                 exp_bit=exp_bit, opt_exp_act_list=exp_act_list)
 

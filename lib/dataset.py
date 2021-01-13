@@ -21,12 +21,8 @@ class VideoDataset(Dataset):
 
     def __init__(self, dataset='ucf101', split='train', clip_len=16, preprocess=False, model_name="c3d"):
         self.model_name = model_name
-        if (self.model_name == "c3d"):
-            self.root_dir = '/mnt/ccnas2/bdp/hf17/Datasets/UCF101/video_data/UCF-101/'
-            self.output_dir = '/mnt/ccnas2/bdp/hf17/Datasets/UCF101/video_data/preprocess/'          
-        else:
-            self.root_dir = '/mnt/ccnas2/bdp/hf17/Datasets/UCF101/video_data/UCF-101/'
-            self.output_dir = '/mnt/ccnas2/bdp/hf17/Datasets/UCF101/video_data/split1/'
+        self.root_dir = '/mnt/ccnas2/bdp/hf17/Datasets/UCF101/video_data/UCF-101/'
+        self.output_dir = '/mnt/ccnas2/bdp/hf17/Datasets/UCF101/video_data/preprocess/'          
         folder = os.path.join(self.output_dir, split)
         self.clip_len = clip_len
         self.split = split

@@ -205,6 +205,8 @@ class r3d(nn.Module):
         p_dict = torch.load("/mnt/ccnas2/bdp/hf17/TCAD_3DCNNs/R3D-ucf101_epoch-99.pth.tar")
         print ("Loading from pretrained models")
         self.load_state_dict(p_dict['state_dict'])
+        #for name in self.state_dict():
+        #    print (name)
         #s_dict = self.state_dict()
 
     def __init_weight(self):
@@ -304,23 +306,29 @@ class BFP_SpatioTemporalResBlock(nn.Module):
         # standard conv->batchnorm->ReLU
         self.conv2 = BFP_SpatioTemporalConv(out_channels, out_channels, kernel_size, padding=padding)
                 #exp_bit=self.exp_bit, mantisa_bit=self.mantisa_bit, opt_exp_act_list=self.opt_exp_act_list[])
-        self.bn2 = nn.BatchNorm3d(out_channels)
+        #self.bn2 = nn.BatchNorm3d(out_channels)
         self.outrelu = nn.ReLU()
 
     def forward(self, x):
         res = self.conv1(x)
+        '''
         res = BFPActivation.transform_activation_offline(res, self.exp_bit, self.mantisa_bit,
                                                          self.opt_exp_act_list[0], is_3d=True)
+        '''
         res = self.relu1(res)
         res = self.conv2(res)
+        '''
         res = BFPActivation.transform_activation_offline(res, self.exp_bit, self.mantisa_bit,
                                                          self.opt_exp_act_list[1], is_3d=True)
+        '''
 
         if self.downsample:
             x = self.downsampleconv(x)
             #x = self.downsamplebn(self.downsampleconv(x))
+        ''' 
         x = BFPActivation.transform_activation_offline(x, self.exp_bit, self.mantisa_bit,
                                                         self.opt_exp_act_list[1], is_3d=True)
+        '''
 
         return self.outrelu(x + res)
 
@@ -412,12 +420,15 @@ class BFP_R3DNet(nn.Module):
         self.pool = nn.AdaptiveAvgPool3d(1)
 
     def forward(self, x):
+        '''
         x = BFPActivation.transform_activation_offline(x, self.exp_bit, self.mantisa_bit,
                                                          self.opt_exp_act_list[0], is_3d=True)
+        '''
         x = self.conv1(x)
+        '''
         x = BFPActivation.transform_activation_offline(x, self.exp_bit, self.mantisa_bit,
                                                          self.opt_exp_act_list[1], is_3d=True)
-
+        '''
         x = self.conv2(x)
         x = self.conv3(x)
         x = self.conv4(x)
@@ -455,11 +466,15 @@ class r3d_bfp(nn.Module):
 
         if pretrained:
             self.__load_pretrained_weights()
+        #for name in self.state_dict():
+        #    print (name)
 
     def forward(self, x):
         x = self.res3d(x)
         logits = self.linear(x)
+        '''
         logits = BFPFullyConnet.transform_fc_offline(logits, self.exp_bit, self.mantisa_bit, self.opt_exp_act_list[-1])
+        '''
         return logits
 
     def __load_pretrained_weights(self):

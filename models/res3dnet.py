@@ -100,7 +100,7 @@ class Bottleneck(nn.Module):
 
 class ResNet(nn.Module):
 
-    def __init__(self, block, layers, sample_size, sample_duration, shortcut_type='B', num_classes=400, last_fc=True):
+    def __init__(self, block, layers, sample_size, sample_duration, shortcut_type='B', num_classes=400, last_fc=True, pretrained=True):
         self.last_fc = last_fc
 
         self.inplanes = 64
@@ -126,8 +126,8 @@ class ResNet(nn.Module):
             elif isinstance(m, nn.BatchNorm3d):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
-        
-        self.__load_pretrained_weights()
+        if pretrained:
+            self.__load_pretrained_weights()
 
     def _make_layer(self, block, planes, blocks, shortcut_type, stride=1):
         downsample = None
@@ -153,8 +153,28 @@ class ResNet(nn.Module):
 
     def __load_pretrained_weights(self):
         p_dict = torch.load("/mnt/ccnas2/bdp/hf17/TCAD_3DCNNs/r3d18_ucf101_split1.pth")
+        for it in p_dict:
+            print (it)
+        p_dict = p_dict["state_dict"]
+        #print ("Loading from pretrained models")
+        #self.load_state_dict(p_dict['state_dict'])
+        #p_dict = torch.load("/mnt/ccnas2/bdp/hf17/TCAD_3DCNNs/r3d18_kinetics.pth")
+        state_name = []
+        for name in self.state_dict():
+            state_name.append(name)
+        #print (state_name)
+        s_dict = self.state_dict()
+        for name in p_dict:
+            #print (name)
+            if name[7:] not in state_name:
+                print ("not loaded:", name)
+                continue
+            print (name[7:])
+            s_dict[name[7:]] = p_dict[name]
+        self.load_state_dict(s_dict)
+
         print ("Loading from pretrained models")
-        self.load_state_dict(p_dict['state_dict'])
+        #self.load_state_dict(p_dict['state_dict'])
 
     def forward(self, x):
         x = self.conv1(x)

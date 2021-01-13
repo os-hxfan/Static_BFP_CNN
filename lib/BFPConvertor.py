@@ -162,6 +162,7 @@ class BFPConvertor_3D:
         bn_eps = []
         for mod in model.modules():
             if isinstance(mod, nn.BatchNorm3d):
+                print ("BN:", mod.name)
                 bn_weight.append(mod.weight.data.cuda())
                 bn_bias.append(mod.bias.data.cuda())
                 bn_mean.append(mod.running_mean.data.cuda())
@@ -183,6 +184,7 @@ class BFPConvertor_3D:
         conv_bias = []
         for mod in model.modules():
             if isinstance(mod, nn.Conv3d):
+                print ("CONV:", mod.name)
                 conv_weight.append(mod.weight.data.cuda())
                 if (conv_isbias):
                     conv_bias.append(mod.bias.data.cuda())
@@ -234,6 +236,7 @@ class BFPConvertor_3D:
                 #bmod.weight.data = bfp_quant_weight_KL(conv_weight[k], 8, 8, group)
                 if (is_kl):
                     #bmod.weight.data = conv_weight[k]
+                    #opt_exp_list = None
                     #bmod.bias.data = conv_bias[k]                   
                     bmod.weight.data, opt_exp_list = find_exp_weight_3d(conv_weight[k], self.mantisa_bit, self.exp_bit, group, eps=0.000000001, num_bins=32)
                     #opt_exp_list = opt_exp_list.int().cpu().data.tolist()
@@ -252,8 +255,10 @@ class BFPConvertor_3D:
             # FC layer          
             if isinstance(bmod, nn.Linear):
                 if (is_kl):
-                    #bmod.weight.data = fc_weight[j]
-                    #bmod.bias.data  = fc_bias[j]                    
+                    '''
+                    bmod.weight.data = fc_weight[j]
+                    bmod.bias.data  = fc_bias[j] 
+                    '''
                     orig_shape = fc_weight[j].shape
                     fc_weight[j] = torch.reshape(fc_weight[j], (orig_shape[0], orig_shape[1], 1, 1))
                     fc_weight[j], opt_exp_list = bfp_quant_weight_KL(fc_weight[j], self.mantisa_bit, self.exp_bit, -1) #quantize the weight of fc as whole
@@ -261,6 +266,7 @@ class BFPConvertor_3D:
                     weight_exp_list.append(opt_exp_list)
                     bmod.weight.data = torch.reshape(fc_weight[j], orig_shape)
                     bmod.bias.data  = bfp_quant_bias_KL(fc_bias[j], 16)
+                    
                 else:
                     orig_shape = fc_weight[j].shape
                     fc_weight[j] = torch.reshape(fc_weight[j], (orig_shape[0], orig_shape[1], 1, 1))
