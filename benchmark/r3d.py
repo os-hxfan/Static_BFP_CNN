@@ -312,22 +312,19 @@ class BFP_SpatioTemporalResBlock(nn.Module):
     def forward(self, x):
         res = self.conv1(x)
         
-        res = BFPActivation.transform_activation_offline(res, self.exp_bit, self.mantisa_bit,
-                                                         self.opt_exp_act_list[0], is_3d=True)
+        res = BFPActivation.transform_activation_online(res, self.exp_bit, self.mantisa_bit, -1, is_3d=True)
         
         res = self.relu1(res)
         res = self.conv2(res)
         
-        res = BFPActivation.transform_activation_offline(res, self.exp_bit, self.mantisa_bit,
-                                                         self.opt_exp_act_list[1], is_3d=True)
+        res = BFPActivation.transform_activation_online(res, self.exp_bit, self.mantisa_bit, -1, is_3d=True)
         
 
         if self.downsample:
             x = self.downsampleconv(x)
             #x = self.downsamplebn(self.downsampleconv(x))
         
-        x = BFPActivation.transform_activation_offline(x, self.exp_bit, self.mantisa_bit,
-                                                        self.opt_exp_act_list[1], is_3d=True)
+        x = BFPActivation.transform_activation_online(x, self.exp_bit, self.mantisa_bit, -1, is_3d=True)
         
 
         return self.outrelu(x + res)
@@ -422,13 +419,11 @@ class BFP_R3DNet(nn.Module):
 
     def forward(self, x):
         
-        x = BFPActivation.transform_activation_offline(x, self.exp_bit, self.mantisa_bit,
-                                                         self.opt_exp_act_list[0], is_3d=True)
+        x = BFPActivation.transform_activation_online(x, self.exp_bit, self.mantisa_bit, -1, is_3d=True)
         
         x = self.relu1(self.conv1(x))
         
-        x = BFPActivation.transform_activation_offline(x, self.exp_bit, self.mantisa_bit,
-                                                         self.opt_exp_act_list[1], is_3d=True)
+        x = BFPActivation.transform_activation_online(x, self.exp_bit, self.mantisa_bit, -1, is_3d=True)
         
         x = self.conv2(x)
         x = self.conv3(x)
@@ -474,7 +469,7 @@ class r3d_bfp(nn.Module):
         x = self.res3d(x)
         logits = self.linear(x)
         
-        logits = BFPFullyConnet.transform_fc_offline(logits, self.exp_bit, self.mantisa_bit, self.opt_exp_act_list[-1])
+        logits = BFPFullyConnet.transform_fc_online(logits, self.exp_bit, self.mantisa_bit, -1)
         
         return logits
 
