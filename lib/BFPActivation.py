@@ -7,13 +7,15 @@ import time
 # PyTorch
 import torch
 
-def transform_activation_online(tensor, exponent, mantissa, chnl_group):
+def transform_activation_online(tensor, exponent, mantissa, chnl_group, is_3d=False):
     # Online means the shared exponent is not fixed
     #      it is deternmined during the inference
     # Quantize the activation tensor along channel dimension
     # Here we require the input tensor has the shape: [batch, channel, heigh, widht]
     # chnl_group : Inditate the number of channel in one group, where one group shared the same exponenet
-
+    if is_3d is True:
+        orig_shape = tensor.shape
+        tensor = torch.reshape(tensor, (orig_shape[0], orig_shape[1]*orig_shape[2], orig_shape[3], orig_shape[4]))
     shp = tensor.shape
     if (chnl_group == -1):
         chnl_group = shp[1]
@@ -24,6 +26,8 @@ def transform_activation_online(tensor, exponent, mantissa, chnl_group):
         tensor = torch.reshape(tensor, (shp[0], number_of_blocks, chnl_group*shp[2]*shp[3]))
         tensor = bfp_quantize(tensor, exponent, mantissa, quant_dim=len(tensor.shape)-1)
         tensor = torch.reshape(tensor, (shp[0], shp[1], shp[2], shp[3]))
+        if is_3d is True:
+            tensor = torch.reshape(tensor, (orig_shape[0], orig_shape[1], orig_shape[2], orig_shape[3], orig_shape[4]))
         return tensor
 
     else:
