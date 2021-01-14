@@ -1,6 +1,7 @@
 import sys, os
 sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/../')
 import numpy as np
+import time
 
 # Internal
 from lib.BFPConvertor import BFPConvertor_3D
@@ -364,14 +365,23 @@ class c3d_bfp(nn.Module):
 
 
 if __name__ == "__main__":
-    inputs = torch.rand(1, 3, 16, 112, 112)
-    net = c3d(num_classes=101, pretrained=True)
-    net.to("cpu")
-    net.eval()
-    test_iter = 250
-    start = time.time()
-    for i in range(test_iter):
-        outputs = net.forward(inputs)
-    end = time.time()
-    avg_time = ((end-start) * 1000) / test_iter
-    print(avg_time, " ms")
+    import os
+    os.environ["CUDA_VISIBLE_DEVICES"] = '1'
+    dev = "gpu"
+    with torch.no_grad():
+        net = c3d(num_classes=101, pretrained=True)
+        if dev == "cpu":
+            net.cpu()
+            inputs = torch.rand(1, 3, 16, 112, 112)
+            test_iter = 100
+        else:
+            net.cuda()
+            inputs = torch.rand(1, 3, 16, 112, 112).cuda()
+            test_iter = 500
+        net.eval()
+        start = time.time()
+        for i in range(test_iter):
+            outputs = net.forward(inputs)
+        end = time.time()
+        avg_time = ((end-start) * 1000) / test_iter
+        print(avg_time, " ms")

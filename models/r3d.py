@@ -1,4 +1,8 @@
 import math
+import sys
+import os
+import time
+sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/../')
 
 import torch.nn as nn
 from torch.nn.modules.utils import _triple
@@ -516,15 +520,24 @@ def get_10x_lr_params(model):
                 yield k
 
 if __name__ == "__main__":
-    inputs = torch.rand(1, 3, 16, 112, 112)
-    net = r3d(101, (2, 2, 2, 2), pretrained=True)
-    net.to("cpu")
-    net.eval()
-    test_iter = 250
-    start = time.time()
-    for i in range(test_iter):
-        outputs = net.forward(inputs)
-    end = time.time()
-    avg_time = ((end-start) * 1000) / test_iter
-    print(avg_time, " ms")
+    import os
+    os.environ["CUDA_VISIBLE_DEVICES"] = '2'
+    with torch.no_grad():
+        net = r3d(101, pretrained=True)
+        dev = "cpu"
+        if dev == "cpu":
+            inputs = torch.rand(1, 3, 16, 112, 112)
+            net.cpu()
+            test_iter = 100
+        else:
+            inputs = torch.rand(1, 3, 16, 112, 112).cuda()
+            net.cuda()
+            test_iter = 1000
+        net.eval()
+        start = time.time()
+        for i in range(test_iter):
+            outputs = net.forward(inputs)
+        end = time.time()
+        avg_time = ((end-start) * 1000) / test_iter
+        print(avg_time, " ms")
 
