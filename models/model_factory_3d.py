@@ -8,9 +8,12 @@ from benchmark import r3d as br_r3d
 models_map = {  "c3d" : c3d.c3d,
                 "c3d_bfp" : c3d.c3d_bfp,
                 "br_c3d_bfp" : br_c3d.c3d_bfp,
-                "r3d" : r3d.r3d,
-                "r3d_bfp" : r3d.r3d_bfp,
-                "br_r3d_bfp" : br_r3d.r3d_bfp
+                "r3d_18" : r3d.r3d_18,
+                "r3d_18_bfp" : r3d.r3d_18_bfp,
+                "br_r3d_18_bfp" : br_r3d.r3d_18_bfp,
+                "r3d_34" : r3d.r3d_34,
+                "r3d_34_bfp" : r3d.r3d_34_bfp,
+                "br_r3d_34_bfp" : br_r3d.r3d_34_bfp
 }
 
 def get_network(model_name, pretrained=True, bfp=False, group=1, mantisa_bit=8, exp_bit=8, opt_exp_act_list=None, is_online=False, exp_act='kl'):

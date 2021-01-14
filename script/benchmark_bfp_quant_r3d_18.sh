@@ -1,4 +1,4 @@
-python -m tools.bfp_quant_3d --model_name r3d \
+python -m tools.bfp_quant_3d --model_name r3d_18 \
 --dataset_dir /mnt/ccnas2/bdp/hf17/Datasets/Imagenet12/ \
 --mantisa_bit 8 \
 --exp_bit 4 \
@@ -13,7 +13,8 @@ python -m tools.bfp_quant_3d --model_name r3d \
 --exp_act kl \
 --bfp_act_chnl -1 \
 --bfp_weight_chnl -1 \
---bfp_quant 0 \
+--bfp_quant 1 \
+--is_online 1 \
 --num_examples 10 \
 --hooks BatchNorm3d,Linear \
 --act_bins_factor 6

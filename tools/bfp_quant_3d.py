@@ -118,8 +118,14 @@ def bfp_quant(model_name, dataset_dir, num_classes, gpus, mantisa_bit, exp_bit, 
         opt_exp, max_exp = Utils.find_exp_act_3d(images_statistc, mantisa_bit, exp_bit, group=3, eps=eps, bins_factor=act_bins_factor)
         opt_exp_act_list.append(opt_exp)
         max_exp_act_list.append(max_exp)
-        sc_layer = [2, 4, 9, 14, 19]
-        ds_sc_layer = [6, 7, 11, 12, 16, 17]
+        sc_layer = []
+        ds_sc_layer = []
+        if model_name == "r3d_18":
+            sc_layer = [2, 4, 9, 14, 19]
+            ds_sc_layer = [6, 7, 11, 12, 16, 17]
+        else:
+            sc_layer = [2, 4, 6, 11, 13, 15, 20, 22, 24, 26, 28, 33, 35, 37]
+            ds_sc_layer = [8, 9, 17, 18, 30, 31]
         for i, intern_output in enumerate(intern_outputs):
             #Deternmining the optimal exponent by minimizing the KL_Divergence in channel-wise manner
             print ("i-th", i, "  shape:", intern_output.out_features.shape, " name:", intern_output.m)

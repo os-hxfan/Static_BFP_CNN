@@ -11,7 +11,8 @@ from lib import BFPFullyConnet
 
 import torch
 import torch.nn as nn
-layer_sizes = (2, 2, 2, 2)
+# layer_sizes = [2, 2, 2, 2] for r3d-18
+# layer_sizes = [3, 4, 6, 3] for r3d-34
 ######### Orig Model Define #############
 class SpatioTemporalConv(nn.Module):
     r"""Applies a factored 3D convolution over an input signal composed of several input
@@ -176,7 +177,7 @@ class R3DNet(nn.Module):
         return x.view(-1, 512)
 
 
-class r3d(nn.Module):
+class r3d_18(nn.Module):
     r"""Forms a complete ResNet classifier producing vectors of size num_classes, by initializng 5 layers,
     with the number of blocks in each layer set by layer_sizes, and by performing a global average pool
     at the end producing a 512-dimensional vector for each element in the batch,
@@ -188,7 +189,7 @@ class r3d(nn.Module):
             block_type (Module, optional): Type of block that is to be used to form the layers. Default: SpatioTemporalResBlock.
         """
 
-    def __init__(self, num_classes, block_type=SpatioTemporalResBlock, pretrained=False):
+    def __init__(self, num_classes, layer_sizes=[2, 2, 2, 2], block_type=SpatioTemporalResBlock, pretrained=False):
         super(r3d, self).__init__()
 
         self.res3d = R3DNet(layer_sizes, block_type)
@@ -206,7 +207,52 @@ class r3d(nn.Module):
         return logits
 
     def __load_pretrained_weights(self):
-        p_dict = torch.load("/mnt/ccnas2/bdp/hf17/TCAD_3DCNNs/R3D-ucf101_epoch-99.pth.tar")
+        p_dict = torch.load("/mnt/ccnas2/bdp/hf17/TCAD_3DCNNs/R3D-18-ucf101_epoch-99.pth.tar")
+        print ("Loading from pretrained models")
+        self.load_state_dict(p_dict['state_dict'])
+        #for name in self.state_dict():
+        #    print (name)
+        #s_dict = self.state_dict()
+
+    def __init_weight(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv3d):
+                nn.init.kaiming_normal_(m.weight)
+            elif isinstance(m, nn.BatchNorm3d):
+                m.weight.data.fill_(1)
+                m.bias.data.zero_()
+
+class r3d_34(nn.Module):
+    r"""Forms a complete ResNet classifier producing vectors of size num_classes, by initializng 5 layers,
+    with the number of blocks in each layer set by layer_sizes, and by performing a global average pool
+    at the end producing a 512-dimensional vector for each element in the batch,
+    and passing them through a Linear layer.
+
+        Args:
+            num_classes(int): Number of classes in the data
+            layer_sizes (tuple): An iterable containing the number of blocks in each layer
+            block_type (Module, optional): Type of block that is to be used to form the layers. Default: SpatioTemporalResBlock.
+        """
+
+    def __init__(self, num_classes, layer_sizes=[3, 4, 6, 3], block_type=SpatioTemporalResBlock, pretrained=False):
+        super(r3d, self).__init__()
+
+        self.res3d = R3DNet(layer_sizes, block_type)
+        self.linear = nn.Linear(512, num_classes)
+
+        self.__init_weight()
+
+        if pretrained:
+            self.__load_pretrained_weights()
+
+    def forward(self, x):
+        x = self.res3d(x)
+        logits = self.linear(x)
+
+        return logits
+
+    def __load_pretrained_weights(self):
+        p_dict = torch.load("/mnt/ccnas2/bdp/hf17/TCAD_3DCNNs/R3D-34-ucf101_epoch-99.pth.tar")
         print ("Loading from pretrained models")
         self.load_state_dict(p_dict['state_dict'])
         #for name in self.state_dict():
@@ -444,7 +490,7 @@ class BFP_R3DNet(nn.Module):
         return x.view(-1, 512)
 
 
-class r3d_bfp(nn.Module):
+class r3d_18_bfp(nn.Module):
     r"""Forms a complete ResNet classifier producing vectors of size num_classes, by initializng 5 layers,
     with the number of blocks in each layer set by layer_sizes, and by performing a global average pool
     at the end producing a 512-dimensional vector for each element in the batch,
@@ -456,7 +502,7 @@ class r3d_bfp(nn.Module):
             block_type (Module, optional): Type of block that is to be used to form the layers. Default: SpatioTemporalResBlock.
         """
 
-    def __init__(self, num_classes, block_type=BFP_SpatioTemporalResBlock, pretrained=False,
+    def __init__(self, num_classes, layer_sizes=[2, 2, 2, 2], block_type=BFP_SpatioTemporalResBlock, pretrained=False,
             exp_bit=4, mantisa_bit=8, opt_exp_act_list=None):
         super(r3d_bfp, self).__init__()
 
@@ -496,7 +542,57 @@ class r3d_bfp(nn.Module):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
 
+class r3d_34_bfp(nn.Module):
+    r"""Forms a complete ResNet classifier producing vectors of size num_classes, by initializng 5 layers,
+    with the number of blocks in each layer set by layer_sizes, and by performing a global average pool
+    at the end producing a 512-dimensional vector for each element in the batch,
+    and passing them through a Linear layer.
 
+        Args:
+            num_classes(int): Number of classes in the data
+            layer_sizes (tuple): An iterable containing the number of blocks in each layer
+            block_type (Module, optional): Type of block that is to be used to form the layers. Default: SpatioTemporalResBlock.
+        """
+
+    def __init__(self, num_classes, layer_sizes=[3, 4, 6, 3], block_type=BFP_SpatioTemporalResBlock, pretrained=False,
+            exp_bit=4, mantisa_bit=8, opt_exp_act_list=None):
+        super(r3d_bfp, self).__init__()
+
+        self.exp_bit = exp_bit
+        self.mantisa_bit = mantisa_bit
+        self.opt_exp_act_list = opt_exp_act_list
+
+        self.res3d = BFP_R3DNet(layer_sizes, block_type, exp_bit=self.exp_bit, mantisa_bit=self.mantisa_bit, opt_exp_act_list=self.opt_exp_act_list)
+        self.linear = nn.Linear(512, num_classes)
+
+        self.__init_weight()
+
+        if pretrained:
+            self.__load_pretrained_weights()
+        #for name in self.state_dict():
+        #    print (name)
+
+    def forward(self, x):
+        x = self.res3d(x)
+        logits = self.linear(x)
+        
+        logits = BFPFullyConnet.transform_fc_offline(logits, self.exp_bit, self.mantisa_bit, self.opt_exp_act_list[-1])
+        
+        return logits
+
+    def __load_pretrained_weights(self):
+        s_dict = self.state_dict()
+        for name in s_dict:
+            print(name)
+            print(s_dict[name].size())
+
+    def __init_weight(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv3d):
+                nn.init.kaiming_normal_(m.weight)
+            elif isinstance(m, nn.BatchNorm3d):
+                m.weight.data.fill_(1)
+                m.bias.data.zero_()
 
 def get_1x_lr_params(model):
     """
@@ -523,7 +619,7 @@ if __name__ == "__main__":
     import os
     os.environ["CUDA_VISIBLE_DEVICES"] = '2'
     with torch.no_grad():
-        net = r3d(101, pretrained=True)
+        net = r3d_18(101, pretrained=True)
         dev = "cpu"
         if dev == "cpu":
             inputs = torch.rand(1, 3, 16, 112, 112)

@@ -1,4 +1,4 @@
-python -m tools.bfp_quant_3d --model_name r3d \
+python -m tools.bfp_quant_3d --model_name r3d_34 \
 --dataset_dir /mnt/ccnas2/bdp/hf17/Datasets/Imagenet12/ \
 --mantisa_bit 8 \
 --exp_bit 4 \
