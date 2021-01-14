@@ -190,7 +190,7 @@ class r3d_18(nn.Module):
         """
 
     def __init__(self, num_classes, layer_sizes=[2, 2, 2, 2], block_type=SpatioTemporalResBlock, pretrained=False):
-        super(r3d, self).__init__()
+        super(r3d_18, self).__init__()
 
         self.res3d = R3DNet(layer_sizes, block_type)
         self.linear = nn.Linear(512, num_classes)
@@ -235,7 +235,7 @@ class r3d_34(nn.Module):
         """
 
     def __init__(self, num_classes, layer_sizes=[3, 4, 6, 3], block_type=SpatioTemporalResBlock, pretrained=False):
-        super(r3d, self).__init__()
+        super(r3d_34, self).__init__()
 
         self.res3d = R3DNet(layer_sizes, block_type)
         self.linear = nn.Linear(512, num_classes)
@@ -504,7 +504,7 @@ class r3d_18_bfp(nn.Module):
 
     def __init__(self, num_classes, layer_sizes=[2, 2, 2, 2], block_type=BFP_SpatioTemporalResBlock, pretrained=False,
             exp_bit=4, mantisa_bit=8, opt_exp_act_list=None):
-        super(r3d_bfp, self).__init__()
+        super(r3d_18_bfp, self).__init__()
 
         self.exp_bit = exp_bit
         self.mantisa_bit = mantisa_bit
@@ -556,7 +556,7 @@ class r3d_34_bfp(nn.Module):
 
     def __init__(self, num_classes, layer_sizes=[3, 4, 6, 3], block_type=BFP_SpatioTemporalResBlock, pretrained=False,
             exp_bit=4, mantisa_bit=8, opt_exp_act_list=None):
-        super(r3d_bfp, self).__init__()
+        super(r3d_34_bfp, self).__init__()
 
         self.exp_bit = exp_bit
         self.mantisa_bit = mantisa_bit
@@ -617,9 +617,9 @@ def get_10x_lr_params(model):
 
 if __name__ == "__main__":
     import os
-    os.environ["CUDA_VISIBLE_DEVICES"] = '2'
+    os.environ["CUDA_VISIBLE_DEVICES"] = '1'
     with torch.no_grad():
-        net = r3d_18(101, pretrained=True)
+        net = r3d_34(101, pretrained=True)
         dev = "cpu"
         if dev == "cpu":
             inputs = torch.rand(1, 3, 16, 112, 112)
