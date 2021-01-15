@@ -6,6 +6,7 @@ from benchmark import c3d as br_c3d
 from benchmark import r3d as br_r3d
 
 models_map = {  "c3d" : c3d.c3d,
+                "lq_c3d" : c3d.c3d_lq,
                 "c3d_bfp" : c3d.c3d_bfp,
                 "br_c3d_bfp" : br_c3d.c3d_bfp,
                 "r3d_18" : r3d.r3d_18,

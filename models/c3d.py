@@ -364,6 +364,117 @@ class c3d_bfp(nn.Module):
                 m.bias.data.zero_()
 
 
+class c3d_lq(nn.Module):
+    """
+    The C3D network.
+    """
+
+    def __init__(self, num_classes, pretrained=False):
+        super(c3d_lq, self).__init__()
+        print ("Construct original C3D model")
+        self.conv1 = nn.Conv3d(3, 64, kernel_size=(3, 3, 3), padding=(1, 1, 1))
+        self.bn1 = nn.BatchNorm3d(64)
+        self.relu1 = nn.ReLU()
+        self.pool1 = nn.MaxPool3d(kernel_size=(1, 2, 2), stride=(1, 2, 2))
+
+        self.conv2 = nn.Conv3d(64, 128, kernel_size=(3, 3, 3), padding=(1, 1, 1))
+        self.bn2 = nn.BatchNorm3d(128)
+        self.relu2 = nn.ReLU()
+        self.pool2 = nn.MaxPool3d(kernel_size=(2, 2, 2), stride=(2, 2, 2))
+
+        self.conv3a = nn.Conv3d(128, 256, kernel_size=(3, 3, 3), padding=(1, 1, 1))
+        self.bn3a = nn.BatchNorm3d(256)
+        self.relu3a = nn.ReLU()
+        self.conv3b = nn.Conv3d(256, 256, kernel_size=(3, 3, 3), padding=(1, 1, 1))
+        self.bn3b = nn.BatchNorm3d(256)
+        self.relu3b = nn.ReLU()
+        self.pool3 = nn.MaxPool3d(kernel_size=(2, 2, 2), stride=(2, 2, 2))
+
+        self.conv4a = nn.Conv3d(256, 512, kernel_size=(3, 3, 3), padding=(1, 1, 1))
+        self.bn4a = nn.BatchNorm3d(512)
+        self.relu4a = nn.ReLU()
+        self.conv4b = nn.Conv3d(512, 512, kernel_size=(3, 3, 3), padding=(1, 1, 1))
+        self.bn4b = nn.BatchNorm3d(512)
+        self.relu4b = nn.ReLU()
+        self.pool4 = nn.MaxPool3d(kernel_size=(2, 2, 2), stride=(2, 2, 2))
+
+        self.conv5a = nn.Conv3d(512, 512, kernel_size=(3, 3, 3), padding=(1, 1, 1))
+        self.bn5a = nn.BatchNorm3d(512)
+        self.relu5a = nn.ReLU()
+        self.conv5b = nn.Conv3d(512, 512, kernel_size=(3, 3, 3), padding=(1, 1, 1))
+        self.bn5b = nn.BatchNorm3d(512)
+        self.relu5b = nn.ReLU()
+        self.pool5 = nn.MaxPool3d(kernel_size=(2, 2, 2), stride=(2, 2, 2), padding=(0, 1, 1))
+
+        self.fc6 = nn.Linear(8192, 4096)
+        self.relu6 = nn.ReLU()
+        self.fc7 = nn.Linear(4096, 4096)
+        self.relu7 = nn.ReLU()
+        self.fc8 = nn.Linear(4096, num_classes)
+
+        self.dropout = nn.Dropout(p=0.5)
+        self.quant = torch.quantization.QuantStub()
+        self.dequant = torch.quantization.DeQuantStub()
+
+        self.__init_weight()
+
+        if pretrained:
+            self.__load_pretrained_weights()
+
+    def forward(self, x):
+        x = self.quant(x)
+        x = self.relu1(self.bn1(self.conv1(x)))
+        x = self.pool1(x)
+
+        x = self.relu2(self.bn2(self.conv2(x)))
+        x = self.pool2(x)
+
+        x = self.relu3a(self.bn3a(self.conv3a(x)))
+        x = self.relu3b(self.bn3b(self.conv3b(x)))
+        x = self.pool3(x)
+
+        x = self.relu4a(self.bn4a(self.conv4a(x)))
+        x = self.relu4b(self.bn4b(self.conv4b(x)))
+        x = self.pool4(x)
+
+        x = self.relu5a(self.bn5a(self.conv5a(x)))
+        x = self.relu5b(self.bn5b(self.conv5b(x)))
+        x = self.pool5(x)
+
+        x = x.view(-1, 8192)
+        x = self.relu6(self.fc6(x))
+        #x = self.dropout(x)
+        x = self.relu7(self.fc7(x))
+        #x = self.dropout(x)
+
+        logits = self.fc8(x)
+        logits = self.dequant(x)
+        return logits
+
+    def __load_pretrained_weights(self):
+        """Initialiaze network."""
+        #p_dict = torch.load("/mnt/ccnas2/bdp/hf17/TCAD_3DCNNs/c3d-pretrained.pth")
+        p_dict = torch.load("/mnt/ccnas2/bdp/hf17/TCAD_3DCNNs/C3D-ucf101_epoch-99.pth.tar")
+        print ("Loading from pretrained models")
+        self.load_state_dict(p_dict['state_dict'])
+        s_dict = self.state_dict()
+
+    def __init_weight(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv3d):
+                # n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+                # m.weight.data.normal_(0, math.sqrt(2. / n))
+                torch.nn.init.kaiming_normal_(m.weight)
+            elif isinstance(m, nn.BatchNorm3d):
+                m.weight.data.fill_(1)
+                m.bias.data.zero_()
+    def fuse_model(self):
+        modules_to_fuse = [['conv1', 'bn1', 'relu1'], ['conv2', 'bn2', 'relu2'], ['conv3a', 'bn3a', 'relu3a'],
+                            ['conv3b', 'bn3b', 'relu3b'], ['conv4a', 'bn4a', 'relu4a'], ['conv4b', 'bn4b', 'relu4b'],
+                            ['conv5a', 'bn5a', 'relu5a'], ['conv5b', 'bn5b', 'relu5b'], ['fc6', 'relu6'], ['fc7', 'relu7']]
+        fused_model = torch.quantization.fuse_modules(self, modules_to_fuse)
+
+
 if __name__ == "__main__":
     import os
     os.environ["CUDA_VISIBLE_DEVICES"] = '1'
