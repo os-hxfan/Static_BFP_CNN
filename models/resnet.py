@@ -252,3 +252,24 @@ def resnet34(pretrained=False, bit_nmb=8, num_classes=1000, bfp=False, mantisa_b
         block_model = model
     return block_model
 
+if __name__ == "__main__":
+    import os
+    os.environ["CUDA_VISIBLE_DEVICES"] = '1'
+    with torch.no_grad():
+        net = resnet50()
+        dev = "cpu"
+        if dev == "cpu":
+            inputs = torch.rand(1, 3, 112, 112)
+            net.cpu()
+            test_iter = 100
+        else:
+            inputs = torch.rand(1, 3, 112, 112).cuda()
+            net.cuda()
+            test_iter = 1000
+        net.eval()
+        start = time.time()
+        for i in range(test_iter):
+            outputs = net.forward(inputs)
+        end = time.time()
+        avg_time = ((end-start) * 1000) / test_iter
+        print(avg_time, " ms")
