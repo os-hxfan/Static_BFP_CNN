@@ -448,7 +448,7 @@ class r3d_18_bfp(nn.Module):
 
     def __init__(self, num_classes, layer_sizes=[2, 2, 2, 2], block_type=BFP_SpatioTemporalResBlock, pretrained=False,
             exp_bit=4, mantisa_bit=8, opt_exp_act_list=None):
-        super(r3d_bfp, self).__init__()
+        super(r3d_18_bfp, self).__init__()
 
         self.exp_bit = exp_bit
         self.mantisa_bit = mantisa_bit
